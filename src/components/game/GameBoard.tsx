@@ -15,83 +15,89 @@ interface GameBoardProps {
 }
 
 const GameBoard = ({ currentPlayer, cards, isSpymaster, onCardClick, onRightClick, currentTeam, canGuess }: GameBoardProps) => {
-  const getCardStyle = (card: GameCard) => {
-    if (card.revealed || isSpymaster) {
-      switch (card.type) {
-        case 'red':
-          return card.revealed 
-            ? 'bg-team-red text-team-red-foreground opacity-90' 
-            : 'bg-team-red/20 border-team-red text-team-red ring-1 ring-team-red/30';
-        case 'blue':
-          return card.revealed 
-            ? 'bg-team-blue text-team-blue-foreground opacity-90' 
-            : 'bg-team-blue/20 border-team-blue text-team-blue ring-1 ring-team-blue/30';
-        case 'assassin':
-          return card.revealed 
-            ? 'bg-card-assassin text-primary-foreground' 
-            : isSpymaster
-              ? 'bg-card-assassin text-primary-foreground border-foreground/30 ring-1 ring-foreground/20'
-              : 'bg-card-assassin/20 border-foreground/30 text-foreground ring-1 ring-foreground/20';
-        default:
-          return card.revealed 
-            ? 'bg-card-neutral text-muted-foreground opacity-70' 
-            : 'bg-card-neutral/50 border-border text-muted-foreground ring-1 ring-border';
-      }
-    }
-    const highlightRing = card.highlighted ? 'ring-2 ring-gold' : '';
-      const clickable = canGuess && !isSpymaster && currentPlayer?.team === currentTeam
-      ? 'cursor-pointer hover:bg-secondary hover:border-primary/30 hover:shadow-md active:scale-[0.97]'
-      : 'cursor-default opacity-80';
-    return `bg-card border-border text-foreground transition-all duration-200 ${clickable} ${highlightRing}`;
-  };
+    const getCardStyle = (card: GameCard) => {
+        if (card.revealed) {
+            switch (card.type) {
+                case 'red':
+                    return 'bg-team-red text-white border-team-red shadow-inner';
+                case 'blue':
+                    return 'bg-team-blue text-white border-team-blue shadow-inner';
+                case 'assassin':
+                    return 'bg-gray-900 text-white border-gray-900 dark:bg-black dark:border-black';
+                default:
+                    return 'bg-muted text-muted-foreground border-muted opacity-70';
+            }
+        }
 
-  const handleContextMenu = (e: React.MouseEvent, index: number) => {
-    e.preventDefault();
-    if (!cards[index].revealed) {
-      onRightClick(index);
-    }
-  };
+        if (isSpymaster) {
+            switch (card.type) {
+                case 'red':
+                    return 'bg-red-500 dark:bg-red-700 text-white border-red-600 font-bold';
+                case 'blue':
+                    return 'bg-blue-500 dark:bg-blue-700 text-white border-blue-600 font-bold';
+                case 'assassin':
+                    return 'bg-gray-900 dark:bg-black text-white border-gray-700 font-bold';
+                default:
+                    // Neutral — warm cream in light mode, visible muted in dark
+                    return 'bg-stone-100 dark:bg-muted text-stone-500 dark:text-muted-foreground border-stone-300 dark:border-border';
+            }
+        }
 
-  const isMyTurn =
-    canGuess &&
-    currentPlayer?.team === currentTeam &&
-    !currentPlayer?.isSpymaster;
+        // Regular player view (unrevealed)
+        const highlightRing = card.highlighted ? 'ring-2 ring-gold shadow-[0_0_12px_hsl(var(--gold)/0.4)]' : '';
+        const clickable = canGuess && !isSpymaster && currentPlayer?.team === currentTeam
+            ? 'cursor-pointer hover:bg-secondary hover:border-primary/40 hover:shadow-md hover:-translate-y-0.5 active:scale-[0.97] active:translate-y-0'
+            : 'cursor-default';
+        return `bg-card border-border/70 text-foreground transition-all duration-200 ${clickable} ${highlightRing}`;
+    };
 
-  return (
-    <div className="flex-1 px-1 py-3 sm:px-2 sm:py-4">
-      <div
-        className="w-full max-w-4xl mx-auto grid grid-cols-5 gap-1.5 sm:gap-2.5"
-        style={{ gridAutoRows: '1fr', aspectRatio: '5 / 5' }}
-      >
-        {cards.map((card, index) => (
-          <button
-            key={index}
-            onClick={() => {
-              if (!card || !card.word || !isMyTurn || card.revealed) return;
-              onCardClick(index);
-            }}
-            onContextMenu={(e) => handleContextMenu(e, index)}
-            disabled={!isMyTurn || card.revealed}
-            className={`
-              relative rounded-lg border p-1.5 sm:p-3 
+    const handleContextMenu = (e: React.MouseEvent, index: number) => {
+        e.preventDefault();
+        if (!cards[index].revealed) {
+            onRightClick(index);
+        }
+    };
+
+    const isMyTurn = canGuess && currentPlayer?.team === currentTeam && !currentPlayer?.isSpymaster;
+
+    return (
+        <div className="flex-1 px-2 py-3 sm:px-3 sm:py-4">
+            <div
+                className="w-full max-w-4xl mx-auto grid grid-cols-5 gap-1.5 sm:gap-2"
+                style={{ gridAutoRows: '1fr', aspectRatio: '5 / 5' }}
+            >
+                {cards.map((card, index) => (
+                    <button
+                        key={index}
+                        onClick={() => {
+                            if (!card?.word || !isMyTurn || card.revealed) return;
+                            onCardClick(index);
+                        }}
+                        onContextMenu={(e) => handleContextMenu(e, index)}
+                        disabled={!isMyTurn || card.revealed}
+                        className={`
+              relative rounded-xl border-2 p-1.5 sm:p-2.5
               min-h-0 min-w-0 aspect-square
               flex items-center justify-center text-center
-              font-semibold text-[11px] sm:text-sm
-              transition-all duration-300 animate-scale-in
-              ${!isMyTurn ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}
+              font-semibold text-[10px] sm:text-xl
+              transition-all duration-200 animate-scale-in
+              select-none
+              ${!isMyTurn || card.revealed ? 'cursor-default' : 'cursor-pointer'}
               ${getCardStyle(card)}
             `}
-            style={{ animationDelay: `${index * 20}ms` }}
-          >
-            <span className="leading-tight">{card && card.word ? card.word.word : ''}</span>
-            {card && card.revealed && card.type === 'assassin' && (
-              <span className="absolute top-0.5 left-0.5 text-xs">💀</span>
-            )}
-          </button>
-        ))}
-      </div>
-    </div>
-  );
+                        style={{ animationDelay: `${index * 18}ms` }}
+                    >
+            <span className="leading-tight break-words w-full px-0.5">
+              {card?.word?.word ?? ''}
+            </span>
+                        {card?.revealed && card.type === 'assassin' && (
+                            <span className="absolute top-1 right-1 text-[10px]">💀</span>
+                        )}
+                    </button>
+                ))}
+            </div>
+        </div>
+    );
 };
 
 export default GameBoard;
