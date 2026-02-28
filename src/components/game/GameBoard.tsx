@@ -4,10 +4,12 @@ interface GameBoardProps {
   cards: GameCard[];
   isSpymaster: boolean;
   onCardClick: (index: number) => void;
+  onRightClick: (index: number) => void;
   currentTeam: Team;
+  canGuess: boolean;
 }
 
-const GameBoard = ({ cards, isSpymaster, onCardClick, currentTeam }: GameBoardProps) => {
+const GameBoard = ({ cards, isSpymaster, onCardClick, onRightClick, currentTeam, canGuess }: GameBoardProps) => {
   const getCardStyle = (card: GameCard) => {
     if (card.revealed || isSpymaster) {
       switch (card.type) {
@@ -29,28 +31,43 @@ const GameBoard = ({ cards, isSpymaster, onCardClick, currentTeam }: GameBoardPr
             : 'bg-card-neutral/50 border-border text-muted-foreground ring-1 ring-border';
       }
     }
-    return 'bg-card hover:bg-secondary border-border hover:border-primary/30 text-foreground cursor-pointer hover:shadow-md transition-all duration-200 active:scale-[0.97]';
+    const highlightRing = card.highlighted ? 'ring-2 ring-gold' : '';
+    const clickable = canGuess && !isSpymaster
+      ? 'cursor-pointer hover:bg-secondary hover:border-primary/30 hover:shadow-md active:scale-[0.97]'
+      : 'cursor-default opacity-80';
+    return `bg-card border-border text-foreground transition-all duration-200 ${clickable} ${highlightRing}`;
+  };
+
+  const handleContextMenu = (e: React.MouseEvent, index: number) => {
+    e.preventDefault();
+    if (!cards[index].revealed) {
+      onRightClick(index);
+    }
   };
 
   return (
     <div className="flex-1 p-3 sm:p-4">
-      <div className="max-w-4xl mx-auto grid grid-cols-5 gap-2 sm:gap-3">
+      <div className="max-w-3xl mx-auto grid grid-cols-5 gap-1.5 sm:gap-2.5">
         {cards.map((card, index) => (
           <button
             key={index}
-            onClick={() => !card.revealed && onCardClick(index)}
-            disabled={card.revealed}
+            onClick={() => canGuess && !isSpymaster && !card.revealed && onCardClick(index)}
+            onContextMenu={(e) => handleContextMenu(e, index)}
+            disabled={card.revealed || !canGuess || isSpymaster}
             className={`
-              relative rounded-lg border p-2 sm:p-3 
-              min-h-[3.5rem] sm:min-h-[4.5rem]
+              relative rounded-lg border p-1.5 sm:p-3 
+              min-h-[3rem] sm:min-h-[4rem]
               flex items-center justify-center text-center
-              font-semibold text-xs sm:text-sm
+              font-semibold text-[11px] sm:text-sm
               transition-all duration-300 animate-scale-in
               ${getCardStyle(card)}
             `}
             style={{ animationDelay: `${index * 20}ms` }}
           >
             <span className="leading-tight">{card.word.word}</span>
+            {card.revealed && card.type === 'assassin' && (
+              <span className="absolute top-0.5 left-0.5 text-xs">💀</span>
+            )}
           </button>
         ))}
       </div>
