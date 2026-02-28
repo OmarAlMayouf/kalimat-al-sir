@@ -2,6 +2,7 @@ import { GameState, Team } from '@/lib/gameState';
 import { Button } from '@/components/ui/button';
 import { Copy, Share2 } from 'lucide-react';
 import { toast } from 'sonner';
+import { useNavigate } from 'react-router-dom';
 
 interface LobbyProps {
   game: GameState;
@@ -15,6 +16,7 @@ const Lobby = ({ game, playerId, onStart, onSwitchTeam, onToggleSpymaster }: Lob
   const isHost = game.hostId === playerId;
   const redTeam = game.players.filter(p => p.team === 'red');
   const blueTeam = game.players.filter(p => p.team === 'blue');
+  const navigate = useNavigate();
 
   const copyCode = () => {
     navigator.clipboard.writeText(game.roomCode);
@@ -26,9 +28,20 @@ const Lobby = ({ game, playerId, onStart, onSwitchTeam, onToggleSpymaster }: Lob
     window.open(url, '_blank');
   };
 
+  // Check if both teams have a spymaster
+  const redHasSpymaster = redTeam.some(p => p.isSpymaster);
+  const blueHasSpymaster = blueTeam.some(p => p.isSpymaster);
+  const canStart = redHasSpymaster && blueHasSpymaster;
+
   return (
     <div className="min-h-screen flex flex-col items-center justify-center px-4 py-8">
       <div className="w-full max-w-lg mx-auto animate-fade-in space-y-6">
+        {/* Home button */}
+        <div className="flex justify-end">
+          <Button variant="ghost" size="sm" onClick={() => navigate('/')}>
+            الصفحة الرئيسية
+          </Button>
+        </div>
         <div className="text-center">
           <h1 className="text-2xl font-bold mb-2">غرفة الانتظار</h1>
           <div className="inline-flex items-center gap-2 bg-card border rounded-xl px-4 py-3">
@@ -111,6 +124,7 @@ const Lobby = ({ game, playerId, onStart, onSwitchTeam, onToggleSpymaster }: Lob
           <Button 
             onClick={onStart} 
             className="w-full h-14 text-lg font-semibold"
+            disabled={!canStart}
           >
             ابدأ اللعبة
           </Button>
