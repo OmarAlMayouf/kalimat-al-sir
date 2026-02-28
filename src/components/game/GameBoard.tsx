@@ -58,8 +58,11 @@ const GameBoard = ({ currentPlayer, cards, isSpymaster, onCardClick, onRightClic
     !currentPlayer?.isSpymaster;
 
   return (
-    <div className="flex-1 p-3 sm:p-4">
-      <div className="max-w-3xl mx-auto grid grid-cols-5 gap-1.5 sm:gap-2.5">
+    <div className="flex-1 px-1 py-3 sm:px-2 sm:py-4">
+      <div
+        className="w-full max-w-4xl mx-auto grid grid-cols-5 gap-1.5 sm:gap-2.5"
+        style={{ gridAutoRows: '1fr', aspectRatio: '5 / 5' }}
+      >
         {cards.map((card, index) => (
           <button
             key={index}
@@ -71,7 +74,7 @@ const GameBoard = ({ currentPlayer, cards, isSpymaster, onCardClick, onRightClic
             disabled={!isMyTurn || card.revealed}
             className={`
               relative rounded-lg border p-1.5 sm:p-3 
-              min-h-[3rem] sm:min-h-[4rem]
+              min-h-0 min-w-0 aspect-square
               flex items-center justify-center text-center
               font-semibold text-[11px] sm:text-sm
               transition-all duration-300 animate-scale-in
