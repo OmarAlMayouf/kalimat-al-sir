@@ -141,11 +141,6 @@ const Index = () => {
             </Button>
           </div>
         )}
-
-        {/* Footer */}
-        <p className="text-center text-sm text-muted-foreground mt-10">
-          لعبة عائلية سعودية 🇸🇦
-        </p>
       </div>
     </div>
   );

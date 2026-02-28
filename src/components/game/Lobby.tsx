@@ -112,7 +112,7 @@ const Lobby = ({ game, playerId, onStart, onSwitchTeam, onToggleSpymaster }: Lob
             onClick={onStart} 
             className="w-full h-14 text-lg font-semibold"
           >
-            ابدأ اللعبة 🎮
+            ابدأ اللعبة
           </Button>
         )}
       </div>
