@@ -3,7 +3,7 @@
   "private": true,
   "version": "0.0.0",
   "type": "module",
-  "homepage": "https://omaralmayouf.github.io/saudia-connect-play",
+  "homepage": "https://omaralmayouf.github.io/kalimat-al-sir",
   "scripts": {
     "dev": "vite",
     "build": "vite build",
