@@ -31,7 +31,9 @@ const Lobby = ({ game, playerId, onStart, onSwitchTeam, onToggleSpymaster }: Lob
   // Check if both teams have a spymaster
   const redHasSpymaster = redTeam.some(p => p.isSpymaster);
   const blueHasSpymaster = blueTeam.some(p => p.isSpymaster);
-  const canStart = redHasSpymaster && blueHasSpymaster;
+  const redHasPlayers = redTeam.some(p => !p.isSpymaster);
+  const blueHasPlayers = blueTeam.some(p => !p.isSpymaster);
+  const canStart = redHasSpymaster && blueHasSpymaster && redHasPlayers && blueHasPlayers;
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center px-4 py-8">
