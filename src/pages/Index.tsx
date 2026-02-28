@@ -11,56 +11,58 @@ const Index = () => {
   const [playerName, setPlayerName] = useState('');
   const [joinCode, setJoinCode] = useState('');
   const [mode, setMode] = useState<'home' | 'create' | 'join'>('home');
+  const [isLoadingCreate, setIsLoadingCreate] = useState(false);
+  const [isLoadingJoin, setIsLoadingJoin] = useState(false);
 
-    const handleCreate = async () => {
-        if (!playerName.trim()) return;
+  const handleCreate = async () => {
+    if (!playerName.trim()) return;
 
-        const game = createGame(playerName.trim());
+    setIsLoadingCreate(true);
+    try {
+      const game = createGame(playerName.trim());
+      await createGameSession(game);
+      sessionStorage.setItem("playerId", game.hostId);
+      navigate(`/game/${game.roomCode}`);
+    } finally {
+      setIsLoadingCreate(false);
+    }
+  };
 
-        await createGameSession(game);
+  const handleJoin = async () => {
+    if (!playerName.trim() || !joinCode.trim()) return;
 
-        sessionStorage.setItem("playerId", game.hostId);
+    setIsLoadingJoin(true);
+    try {
+      const code = joinCode.trim().toUpperCase();
+      const game = await joinGameSession(code);
 
-        navigate(`/game/${game.roomCode}`);
-    };
+      if (!game) return;
 
-    const handleJoin = async () => {
-        if (!playerName.trim() || !joinCode.trim()) return;
+      const playerId = crypto.randomUUID();
+      game.players.push({
+        id: playerId,
+        name: playerName.trim(),
+        team: "red",
+        isSpymaster: false,
+        isHost: false,
+      });
 
-        const code = joinCode.trim().toUpperCase();
-        const game = await joinGameSession(code);
-
-        if (!game) return;
-
-        const playerId = crypto.randomUUID();
-
-        game.players.push({
-            id: playerId,
-            name: playerName.trim(),
-            team: "red",
-            isSpymaster: false,
-            isHost: false,
-        });
-
-        await updateGameSession(code, {
-            players: game.players
-        });
-
-        sessionStorage.setItem("playerId", playerId);
-
-        navigate(`/game/${code}`);
-    };
+      await updateGameSession(code, { players: game.players });
+      sessionStorage.setItem("playerId", playerId);
+      navigate(`/game/${code}`);
+    } finally {
+      setIsLoadingJoin(false);
+    }
+  };
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center px-4 relative overflow-hidden">
-      {/* Pattern background */}
-      <div 
+      <div
         className="absolute inset-0 opacity-[0.06] pointer-events-none"
         style={{ backgroundImage: `url(${patternBg})`, backgroundSize: '300px' }}
       />
       
       <div className="relative z-10 w-full max-w-md mx-auto animate-fade-in">
-        {/* Logo */}
         <div className="text-center mb-10">
           <div className="inline-flex items-center justify-center w-20 h-20 rounded-2xl bg-primary mb-4">
             <span className="text-3xl font-bold text-primary-foreground">ك</span>
@@ -101,9 +103,9 @@ const Index = () => {
               <Button 
                 onClick={handleCreate} 
                 className="w-full h-12 text-lg font-semibold"
-                disabled={!playerName.trim()}
+                disabled={!playerName.trim() || isLoadingCreate}
               >
-                ابدأ اللعبة
+                {isLoadingCreate ? 'جارٍ الإنشاء...' : 'ابدأ اللعبة'}
               </Button>
             </div>
             <Button 
@@ -138,9 +140,9 @@ const Index = () => {
               <Button 
                 onClick={handleJoin} 
                 className="w-full h-12 text-lg font-semibold"
-                disabled={!playerName.trim() || joinCode.length < 5}
+                disabled={!playerName.trim() || joinCode.length < 5 || isLoadingJoin}
               >
-                انضم
+                {isLoadingJoin ? 'جارٍ الانضمام...' : 'انضم'}
               </Button>
             </div>
             <Button 
