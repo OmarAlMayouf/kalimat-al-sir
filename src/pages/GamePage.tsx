@@ -9,6 +9,7 @@ import TeamSidebar from '@/components/game/TeamSidebar';
 import HintInput from '@/components/game/HintInput';
 import TurnTransition from '@/components/game/TurnTransition';
 import patternBg from '@/assets/pattern-bg.png';
+import {listenToGame, updateGameSession} from "@/lib/gameService";
 
 const GamePage = () => {
   const { roomCode } = useParams<{ roomCode: string }>();
@@ -18,20 +19,20 @@ const GamePage = () => {
   const [transitionTeam, setTransitionTeam] = useState<Team>('red');
   const playerId = sessionStorage.getItem('playerId') || '';
 
-  useEffect(() => {
-    if (!roomCode) return;
-    const stored = sessionStorage.getItem(`game_${roomCode}`);
-    if (stored) {
-      setGame(JSON.parse(stored));
-    } else {
-      navigate('/');
-    }
-  }, [roomCode, navigate]);
+    useEffect(() => {
+        if (!roomCode) return;
 
-  const saveGame = useCallback((newState: GameState) => {
-    setGame(newState);
-    sessionStorage.setItem(`game_${newState.roomCode}`, JSON.stringify(newState));
-  }, []);
+        const unsubscribe = listenToGame(roomCode, (data) => {
+            setGame(data);
+        });
+
+        return () => unsubscribe();
+    }, [roomCode]);
+
+    const saveGame = useCallback(async (newState: GameState) => {
+        setGame(newState);
+        await updateGameSession(newState.roomCode, newState);
+    }, []);
 
   const handleStartGame = () => {
     if (!game) return;
@@ -52,18 +53,25 @@ const GamePage = () => {
     });
   };
 
-  const handleCardClick = (index: number) => {
-    if (!game || game.phase !== 'playing' || game.turnPhase !== 'guessing') return;
-    const prevTeam = game.currentTeam;
-    const newState = revealCard(game, index);
-    saveGame(newState);
+    const handleCardClick = (index: number) => {
+        if (!game || game.phase !== 'playing' || game.turnPhase !== 'guessing') return;
 
-    // Show transition if turn changed
-    if (newState.phase === 'playing' && newState.currentTeam !== prevTeam) {
-      setTransitionTeam(newState.currentTeam);
-      setShowTransition(true);
-    }
-  };
+        const currentPlayer = game.players.find(p => p.id === playerId);
+
+        if (!currentPlayer) return;
+        if (currentPlayer.team !== game.currentTeam) return;
+
+        if (currentPlayer.isSpymaster) return;
+
+        const prevTeam = game.currentTeam;
+        const newState = revealCard(game, index);
+        saveGame(newState);
+
+        if (newState.phase === 'playing' && newState.currentTeam !== prevTeam) {
+            setTransitionTeam(newState.currentTeam);
+            setShowTransition(true);
+        }
+    };
 
   const handleRightClick = (index: number) => {
     if (!game) return;
@@ -116,38 +124,39 @@ const GamePage = () => {
     saveGame({ ...game, players });
   };
 
-  // Timer - only runs during guessing phase
-  useEffect(() => {
-    if (!game || game.phase !== 'playing' || game.turnPhase !== 'guessing') return;
-    const interval = setInterval(() => {
-      setGame(prev => {
-        if (!prev || prev.turnPhase !== 'guessing') return prev;
-        if (prev.timer <= 0) {
-          const nextTeam = (prev.currentTeam === 'red' ? 'blue' : 'red') as Team;
-          const newState: GameState = {
-            ...prev,
-            currentTeam: nextTeam,
-            timer: prev.maxTime,
-            turnPhase: 'hint',
-            currentHint: null,
-            guessesRemaining: 0,
-          };
-          sessionStorage.setItem(`game_${newState.roomCode}`, JSON.stringify(newState));
-          setTransitionTeam(nextTeam);
-          setShowTransition(true);
-          return newState;
-        }
-        const newState = { ...prev, timer: prev.timer - 1 };
-        sessionStorage.setItem(`game_${newState.roomCode}`, JSON.stringify(newState));
-        return newState;
-      });
-    }, 1000);
-    return () => clearInterval(interval);
-  }, [game?.phase, game?.turnPhase, game?.currentTeam]);
+    const currentPlayer = game?.players.find(p => p.id === playerId);
+    const isHost = currentPlayer?.isHost;
+
+    useEffect(() => {
+        if (!game || !isHost) return;
+        if (game.phase !== 'playing' || game.turnPhase !== 'guessing') return;
+
+        const interval = setInterval(async () => {
+            if (game.timer <= 0) {
+                const nextTeam = game.currentTeam === 'red' ? 'blue' : 'red';
+
+                await updateGameSession(game.roomCode, {
+                    currentTeam: nextTeam,
+                    timer: game.maxTime,
+                    turnPhase: 'hint',
+                    currentHint: null,
+                    guessesRemaining: 0,
+                });
+
+            } else {
+                await updateGameSession(game.roomCode, {
+                    timer: game.timer - 1
+                });
+            }
+
+        }, 1000);
+
+        return () => clearInterval(interval);
+
+    }, [game, isHost]);
 
   if (!game) return null;
 
-  const currentPlayer = game.players.find(p => p.id === playerId);
   const isSpymaster = currentPlayer?.isSpymaster || false;
   const isCurrentTeamSpymaster = isSpymaster && currentPlayer?.team === game.currentTeam;
   const canGuess = game.turnPhase === 'guessing';
@@ -186,6 +195,16 @@ const GamePage = () => {
 
               {/* Board */}
               <div className="flex-1 flex flex-col">
+                {/* Show waiting message if it's not this team's turn */}
+                {(!isCurrentTeamSpymaster && currentPlayer && currentPlayer.team !== game.currentTeam) && (
+                  <div className="p-3 text-center">
+                    <div className="bg-secondary/60 rounded-xl py-3 px-6 inline-block animate-pulse">
+                      <span className="text-muted-foreground text-base font-semibold">
+                        بانتظار دور الفريق الآخر
+                      </span>
+                    </div>
+                  </div>
+                )}
                 {/* Hint input for spymaster */}
                 {game.turnPhase === 'hint' && isCurrentTeamSpymaster && (
                   <div className="p-3">
@@ -206,11 +225,26 @@ const GamePage = () => {
                     </div>
                   </div>
                 )}
+                {/* Show current hint and guesses remaining to all players during guessing phase */}
+                {game.turnPhase === 'guessing' && game.currentHint && (
+                  <div className="p-3 text-center">
+                    <div className="bg-secondary/60 rounded-xl py-2 px-6 inline-block">
+                      <span className="text-base font-semibold text-foreground">
+                        {game.currentHint.word ? game.currentHint.word : ''} {game.currentHint.count !== undefined ? `(${game.currentHint.count})` : ''}
+                      </span>
+                      <span className="mx-2 text-muted-foreground">|</span>
+                      <span className="text-sm text-muted-foreground">
+                        متبقي: {game.guessesRemaining > 0 ? game.guessesRemaining : 0}
+                      </span>
+                    </div>
+                  </div>
+                )}
 
                 <GameBoard
                   cards={game.cards}
                   isSpymaster={isSpymaster}
                   onCardClick={handleCardClick}
+                  currentPlayer={currentPlayer}
                   onRightClick={handleRightClick}
                   currentTeam={game.currentTeam}
                   canGuess={canGuess}

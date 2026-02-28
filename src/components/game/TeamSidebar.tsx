@@ -18,7 +18,7 @@ const TeamSidebar = ({ game, team }: TeamSidebarProps) => {
   return (
     <div className={`
       ${teamColors.bg} border ${teamColors.border} rounded-xl p-3 
-      ${isActive ? 'ring-2 ring-gold animate-pulse-gold' : ''}
+      ${isActive ? 'ring-2 ring-gold' : ''}
       transition-all duration-300
     `}>
       {/* Score */}

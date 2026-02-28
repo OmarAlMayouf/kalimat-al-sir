@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { createGame } from '@/lib/gameState';
 import patternBg from '@/assets/pattern-bg.png';
+import { createGameSession, joinGameSession, updateGameSession } from "@/lib/gameService";
 
 const Index = () => {
   const navigate = useNavigate();
@@ -11,34 +12,44 @@ const Index = () => {
   const [joinCode, setJoinCode] = useState('');
   const [mode, setMode] = useState<'home' | 'create' | 'join'>('home');
 
-  const handleCreate = () => {
-    if (!playerName.trim()) return;
-    const game = createGame(playerName.trim());
-    // Store in sessionStorage for now (will be replaced with real-time backend)
-    sessionStorage.setItem(`game_${game.roomCode}`, JSON.stringify(game));
-    sessionStorage.setItem('playerId', game.hostId);
-    navigate(`/game/${game.roomCode}`);
-  };
+    const handleCreate = async () => {
+        if (!playerName.trim()) return;
 
-  const handleJoin = () => {
-    if (!playerName.trim() || !joinCode.trim()) return;
-    const code = joinCode.trim().toUpperCase();
-    const stored = sessionStorage.getItem(`game_${code}`);
-    if (!stored) return;
-    
-    const game = JSON.parse(stored);
-    const playerId = crypto.randomUUID();
-    game.players.push({
-      id: playerId,
-      name: playerName.trim(),
-      team: game.players.filter((p: any) => p.team === 'red').length <= game.players.filter((p: any) => p.team === 'blue').length ? 'red' : 'blue',
-      isSpymaster: false,
-      isHost: false,
-    });
-    sessionStorage.setItem(`game_${code}`, JSON.stringify(game));
-    sessionStorage.setItem('playerId', playerId);
-    navigate(`/game/${code}`);
-  };
+        const game = createGame(playerName.trim());
+
+        await createGameSession(game);
+
+        sessionStorage.setItem("playerId", game.hostId);
+
+        navigate(`/game/${game.roomCode}`);
+    };
+
+    const handleJoin = async () => {
+        if (!playerName.trim() || !joinCode.trim()) return;
+
+        const code = joinCode.trim().toUpperCase();
+        const game = await joinGameSession(code);
+
+        if (!game) return;
+
+        const playerId = crypto.randomUUID();
+
+        game.players.push({
+            id: playerId,
+            name: playerName.trim(),
+            team: "red",
+            isSpymaster: false,
+            isHost: false,
+        });
+
+        await updateGameSession(code, {
+            players: game.players
+        });
+
+        sessionStorage.setItem("playerId", playerId);
+
+        navigate(`/game/${code}`);
+    };
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center px-4 relative overflow-hidden">

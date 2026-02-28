@@ -34,7 +34,7 @@ const GameOverDialog = ({ winner, scores, onRestart, onHome }: GameOverDialogPro
 
         <div className="space-y-3">
           <Button onClick={onRestart} className="w-full h-12 text-lg font-semibold">
-            لعبة جديدة 🔄
+            لعبة جديدة
           </Button>
           <Button variant="outline" onClick={onHome} className="w-full">
             الصفحة الرئيسية

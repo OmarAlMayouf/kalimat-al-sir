@@ -51,19 +51,24 @@ function generateRoomCode(): string {
   return code;
 }
 
-function assignCardTypes(): CardType[] {
-  const types: CardType[] = [];
-  // 8 red, 8 blue, 8 neutral, 1 assassin = 25
-  for (let i = 0; i < 8; i++) types.push('red');
-  for (let i = 0; i < 8; i++) types.push('blue');
-  for (let i = 0; i < 8; i++) types.push('neutral');
-  types.push('assassin');
-  return types.sort(() => Math.random() - 0.5);
+function assignCardTypes(startingTeam: Team): CardType[] {
+    const types: CardType[] = [];
+
+    const redCount = startingTeam === 'red' ? 9 : 8;
+    const blueCount = startingTeam === 'blue' ? 9 : 8;
+
+    for (let i = 0; i < redCount; i++) types.push('red');
+    for (let i = 0; i < blueCount; i++) types.push('blue');
+    for (let i = 0; i < 7; i++) types.push('neutral');
+    types.push('assassin');
+
+    return types.sort(() => Math.random() - 0.5);
 }
 
 export function createGame(hostName: string): GameState {
   const words = getRandomWords(25);
-  const types = assignCardTypes();
+    const startingTeam: Team = Math.random() < 0.5 ? 'red' : 'blue';
+    const types = assignCardTypes(startingTeam);
   const cards: GameCard[] = words.map((word, i) => ({
     word,
     type: types[i],
@@ -78,15 +83,18 @@ export function createGame(hostName: string): GameState {
     phase: 'lobby',
     turnPhase: 'hint',
     cards,
-    currentTeam: 'red',
+    currentTeam: startingTeam,
     scores: { red: 0, blue: 0 },
-    targetScores: { red: 8, blue: 8 },
+    targetScores: {
+        red: startingTeam === 'red' ? 9 : 8,
+        blue: startingTeam === 'blue' ? 9 : 8,
+    },
     timer: 90,
     maxTime: 90,
     players: [{
       id: hostId,
       name: hostName,
-      team: 'red',
+      team: startingTeam,
       isSpymaster: false,
       isHost: true,
     }],
