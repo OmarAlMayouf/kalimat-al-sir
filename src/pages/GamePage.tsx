@@ -18,7 +18,6 @@ const GamePage = () => {
     const [showTransition, setShowTransition] = useState(false);
     const [transitionTeam, setTransitionTeam] = useState<Team>('red');
     const playerId = sessionStorage.getItem('playerId') || '';
-    const player = game.players.find(p => p.id === playerId);
 
     useEffect(() => {
         if (!roomCode) return;
@@ -70,6 +69,7 @@ const GamePage = () => {
     const handleRightClick = (index: number) => {
         if (!game) return;
 
+        const player = game.players.find(p => p.id === playerId);
 
         if (!player) return;
 
@@ -99,6 +99,7 @@ const GamePage = () => {
     };
 
     const handleRestart = () => {
+        const player = game.players.find(p => p.id === playerId);
         if (!game || !player) return;
         const newGame = createGame(player.name);
         newGame.roomCode = game.roomCode;
