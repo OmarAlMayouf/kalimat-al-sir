@@ -18,6 +18,7 @@ const GamePage = () => {
     const [showTransition, setShowTransition] = useState(false);
     const [transitionTeam, setTransitionTeam] = useState<Team>('red');
     const playerId = sessionStorage.getItem('playerId') || '';
+    const player = game.players.find(p => p.id === playerId);
 
     useEffect(() => {
         if (!roomCode) return;
@@ -68,6 +69,17 @@ const GamePage = () => {
 
     const handleRightClick = (index: number) => {
         if (!game) return;
+
+
+        if (!player) return;
+
+        const canHighlight =
+            game.turnPhase === 'guessing' &&
+            player.team === game.currentTeam &&
+            !player.isSpymaster;
+
+        if (!canHighlight) return;
+
         saveGame(toggleHighlight(game, index));
     };
 
@@ -87,9 +99,7 @@ const GamePage = () => {
     };
 
     const handleRestart = () => {
-        if (!game) return;
-        const player = game.players.find(p => p.id === playerId);
-        if (!player) return;
+        if (!game || !player) return;
         const newGame = createGame(player.name);
         newGame.roomCode = game.roomCode;
         newGame.players = game.players;
@@ -143,9 +153,9 @@ const GamePage = () => {
     if (!game) return null;
 
     const isSpymaster = currentPlayer?.isSpymaster || false;
-    const isCurrentTeamSpymaster = isSpymaster && currentPlayer?.team === game.currentTeam;
-    const canGuess = game.turnPhase === 'guessing';
     const isMyTeamTurn = currentPlayer?.team === game.currentTeam;
+    const isCurrentTeamSpymaster = isSpymaster && isMyTeamTurn;
+    const canGuess = game.turnPhase === 'guessing';
 
     return (
         <div className="min-h-screen flex flex-col relative bg-background">

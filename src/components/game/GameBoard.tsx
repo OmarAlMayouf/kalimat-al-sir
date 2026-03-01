@@ -30,24 +30,38 @@ const GameBoard = ({ currentPlayer, cards, isSpymaster, onCardClick, onRightClic
         }
 
         if (isSpymaster) {
+            let baseStyle = '';
+
             switch (card.type) {
                 case 'red':
-                    return 'bg-red-500 dark:bg-red-700 text-white border-red-600 font-bold';
+                    baseStyle = 'bg-red-500 dark:bg-red-700 text-white border-red-600 font-bold';
+                    break;
                 case 'blue':
-                    return 'bg-blue-500 dark:bg-blue-700 text-white border-blue-600 font-bold';
+                    baseStyle = 'bg-blue-500 dark:bg-blue-700 text-white border-blue-600 font-bold';
+                    break;
                 case 'assassin':
-                    return 'bg-gray-900 dark:bg-black text-white border-gray-700 font-bold';
+                    baseStyle = 'bg-gray-900 dark:bg-black text-white border-gray-700 font-bold';
+                    break;
                 default:
-                    // Neutral — warm cream in light mode, visible muted in dark
-                    return 'bg-stone-100 dark:bg-muted text-stone-500 dark:text-muted-foreground border-stone-300 dark:border-border';
+                    baseStyle = 'bg-stone-100 dark:bg-muted text-stone-500 dark:text-muted-foreground border-stone-300 dark:border-border';
             }
+
+            const highlightRing = card.highlighted
+                ? 'ring-2 ring-gold shadow-[0_0_12px_hsl(var(--gold)/0.4)]'
+                : '';
+
+            return `${baseStyle} ${highlightRing}`;
         }
 
-        // Regular player view (unrevealed)
-        const highlightRing = card.highlighted ? 'ring-2 ring-gold shadow-[0_0_12px_hsl(var(--gold)/0.4)]' : '';
-        const clickable = canGuess && !isSpymaster && currentPlayer?.team === currentTeam
-            ? 'cursor-pointer hover:bg-secondary hover:border-primary/40 hover:shadow-md hover:-translate-y-0.5 active:scale-[0.97] active:translate-y-0'
-            : 'cursor-default';
+        const highlightRing = card.highlighted
+            ? 'ring-2 ring-gold shadow-[0_0_12px_hsl(var(--gold)/0.4)]'
+            : '';
+
+        const clickable =
+            canGuess && currentPlayer?.team === currentTeam && !isSpymaster
+                ? 'cursor-pointer hover:bg-secondary hover:border-primary/40 hover:shadow-md hover:-translate-y-0.5 active:scale-[0.97] active:translate-y-0'
+                : 'cursor-default';
+
         return `bg-card border-border/70 text-foreground transition-all duration-200 ${clickable} ${highlightRing}`;
     };
 
