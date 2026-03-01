@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import {
   GameState,
+  LobbySettings,
   revealCard,
   Team,
   createGame,
@@ -38,10 +39,17 @@ const GamePage = () => {
 
   const handleStartGame = () => {
     if (!game) return;
+    const ls = game.lobbySettings;
+    const maxTime =
+      ls?.timeLimitEnabled && ls?.spymasterTimerEnabled
+        ? ls.spymasterDuration
+        : 0;
     const newState = {
       ...game,
       phase: "playing" as const,
       turnPhase: "hint" as const,
+      maxTime,
+      timer: maxTime,
     };
     saveGame(newState);
     setTransitionTeam("red");
@@ -50,12 +58,16 @@ const GamePage = () => {
 
   const handleSubmitHint = (word: string, count: number) => {
     if (!game) return;
+    const ls = game.lobbySettings;
+    const normalTimerOn = ls?.timeLimitEnabled && ls?.normalTimerEnabled;
+    const guessingMaxTime = normalTimerOn ? ls.normalDuration : 0;
     saveGame({
       ...game,
       turnPhase: "guessing",
       currentHint: { word, count },
       guessesRemaining: count + 1,
-      timer: game.maxTime,
+      maxTime: guessingMaxTime,
+      timer: guessingMaxTime,
     });
   };
 
@@ -68,7 +80,22 @@ const GamePage = () => {
     if (currentPlayer.isSpymaster) return;
 
     const prevTeam = game.currentTeam;
-    const newState = revealCard(game, index);
+    let newState = revealCard(game, index);
+
+    // If turn switched to hint phase, correct the timer to spymasterDuration
+    if (newState.phase === "playing" && newState.turnPhase === "hint") {
+      const ls = game.lobbySettings;
+      const spymasterMaxTime =
+        ls?.timeLimitEnabled && ls?.spymasterTimerEnabled
+          ? ls.spymasterDuration
+          : 0;
+      newState = {
+        ...newState,
+        timer: spymasterMaxTime,
+        maxTime: spymasterMaxTime,
+      };
+    }
+
     saveGame(newState);
 
     if (newState.phase === "playing" && newState.currentTeam !== prevTeam) {
@@ -97,10 +124,16 @@ const GamePage = () => {
   const handleEndTurn = () => {
     if (!game) return;
     const nextTeam = game.currentTeam === "red" ? "blue" : "red";
+    const ls = game.lobbySettings;
+    const spymasterMaxTime =
+      ls?.timeLimitEnabled && ls?.spymasterTimerEnabled
+        ? ls.spymasterDuration
+        : 0;
     saveGame({
       ...game,
       currentTeam: nextTeam,
-      timer: game.maxTime,
+      timer: spymasterMaxTime,
+      maxTime: spymasterMaxTime,
       turnPhase: "hint",
       currentHint: null,
       guessesRemaining: 0,
@@ -127,6 +160,11 @@ const GamePage = () => {
     saveGame({ ...game, players });
   };
 
+  const handleSettingsChange = (settings: LobbySettings) => {
+    if (!game) return;
+    saveGame({ ...game, lobbySettings: settings });
+  };
+
   const handleToggleSpymaster = (pId: string) => {
     if (!game) return;
     const player = game.players.find((p) => p.id === pId);
@@ -145,25 +183,56 @@ const GamePage = () => {
 
   useEffect(() => {
     if (!game || !isHost) return;
-    if (game.phase !== "playing" || game.turnPhase !== "guessing") return;
+    if (game.phase !== "playing") return;
+    if (!game.maxTime || game.maxTime === 0) return;
+
+    const ls = game.lobbySettings;
+    const spymasterTimerOn = ls?.timeLimitEnabled && ls?.spymasterTimerEnabled;
+    const normalTimerOn = ls?.timeLimitEnabled && ls?.normalTimerEnabled;
+
+    const isHintPhase = game.turnPhase === "hint";
+    const isGuessingPhase = game.turnPhase === "guessing";
+
+    if (isHintPhase && !spymasterTimerOn) return;
+    if (isGuessingPhase && !normalTimerOn) return;
 
     const interval = setInterval(async () => {
       if (game.timer <= 0) {
         const nextTeam = game.currentTeam === "red" ? "blue" : "red";
-        await updateGameSession(game.roomCode, {
-          currentTeam: nextTeam,
-          timer: game.maxTime,
-          turnPhase: "hint",
-          currentHint: null,
-          guessesRemaining: 0,
-        });
+        if (isHintPhase) {
+          // Spymaster ran out of time → skip to next team's hint phase
+          const nextSpymasterMaxTime = spymasterTimerOn
+            ? ls.spymasterDuration
+            : 0;
+          await updateGameSession(game.roomCode, {
+            currentTeam: nextTeam,
+            timer: nextSpymasterMaxTime,
+            maxTime: nextSpymasterMaxTime,
+            turnPhase: "hint",
+            currentHint: null,
+            guessesRemaining: 0,
+          });
+        } else {
+          // Normal players ran out of time → next team's hint phase
+          const nextSpymasterMaxTime = spymasterTimerOn
+            ? ls.spymasterDuration
+            : 0;
+          await updateGameSession(game.roomCode, {
+            currentTeam: nextTeam,
+            timer: nextSpymasterMaxTime,
+            maxTime: nextSpymasterMaxTime,
+            turnPhase: "hint",
+            currentHint: null,
+            guessesRemaining: 0,
+          });
+        }
       } else {
         await updateGameSession(game.roomCode, { timer: game.timer - 1 });
       }
     }, 1000);
 
     return () => clearInterval(interval);
-  }, [game, isHost]);
+  }, [game, isHost, playerId]);
 
   if (!game) return null;
 
@@ -191,6 +260,7 @@ const GamePage = () => {
             onStart={handleStartGame}
             onSwitchTeam={handleSwitchTeam}
             onToggleSpymaster={handleToggleSpymaster}
+            onSettingsChange={handleSettingsChange}
           />
         )}
 

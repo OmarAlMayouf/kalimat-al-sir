@@ -11,6 +11,8 @@ const GameHeader = ({ game, onEndTurn }: GameHeaderProps) => {
   const seconds = game.timer % 60;
   const isLowTime = game.timer <= 15;
   const isGuessing = game.turnPhase === "guessing";
+  const isHint = game.turnPhase === "hint";
+  const showTimer = game.maxTime > 0 && (isGuessing || isHint);
   const isRed = game.currentTeam === "red";
 
   return (
@@ -50,7 +52,7 @@ const GameHeader = ({ game, onEndTurn }: GameHeaderProps) => {
         </div>
 
         {/* Timer */}
-        {isGuessing && (
+        {showTimer && (
           <div
             className={`flex items-center gap-1.5 shrink-0 font-mono font-bold text-lg tabular-nums transition-colors ${
               isLowTime ? "text-destructive animate-pulse" : "text-foreground"

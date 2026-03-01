@@ -17,6 +17,31 @@ export interface Hint {
   count: number;
 }
 
+export const TIME_OPTIONS = [
+  { label: "٣٠ ثانية", value: 30 },
+  { label: "دقيقة", value: 60 },
+  { label: "٣ دقائق", value: 180 },
+  { label: "٥ دقائق", value: 300 },
+] as const;
+
+export type TimeDuration = (typeof TIME_OPTIONS)[number]["value"];
+
+export interface LobbySettings {
+  timeLimitEnabled: boolean;
+  spymasterTimerEnabled: boolean;
+  normalTimerEnabled: boolean;
+  spymasterDuration: TimeDuration;
+  normalDuration: TimeDuration;
+}
+
+export const DEFAULT_LOBBY_SETTINGS: LobbySettings = {
+  timeLimitEnabled: false,
+  spymasterTimerEnabled: true,
+  normalTimerEnabled: true,
+  spymasterDuration: 60,
+  normalDuration: 60,
+};
+
 export interface GameState {
   roomCode: string;
   phase: GamePhase;
@@ -32,6 +57,7 @@ export interface GameState {
   hostId: string;
   currentHint: Hint | null;
   guessesRemaining: number;
+  lobbySettings: LobbySettings;
 }
 
 export interface Player {
@@ -104,6 +130,7 @@ export function createGame(hostName: string): GameState {
     hostId,
     currentHint: null,
     guessesRemaining: 0,
+    lobbySettings: { ...DEFAULT_LOBBY_SETTINGS },
   };
 }
 

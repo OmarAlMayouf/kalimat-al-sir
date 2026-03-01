@@ -1,8 +1,10 @@
-import { GameState, Team } from "@/lib/gameState";
+import { GameState, LobbySettings, Team } from "@/lib/gameState";
 import { Button } from "@/components/ui/button";
 import { Copy, Share2, Crown, Users, Shield, ChevronRight } from "lucide-react";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
+import { useLobbySettings } from "@/hooks/useLobbySettings";
+import LobbyTimerConfig from "@/components/game/LobbyTimerConfig";
 
 interface LobbyProps {
   game: GameState;
@@ -10,6 +12,7 @@ interface LobbyProps {
   onStart: () => void;
   onSwitchTeam: (playerId: string, team: Team) => void;
   onToggleSpymaster: (playerId: string) => void;
+  onSettingsChange: (settings: LobbySettings) => void;
 }
 
 const Lobby = ({
@@ -18,12 +21,22 @@ const Lobby = ({
   onStart,
   onSwitchTeam,
   onToggleSpymaster,
+  onSettingsChange,
 }: LobbyProps) => {
   const isHost = game.hostId === playerId;
   const redTeam = game.players.filter((p) => p.team === "red");
   const blueTeam = game.players.filter((p) => p.team === "blue");
   const navigate = useNavigate();
   const currentPlayer = game.players.find((p) => p.id === playerId);
+
+  const {
+    settings,
+    toggleTimeLimit,
+    toggleSpymasterTimer,
+    toggleNormalTimer,
+    setSpymasterDuration,
+    setNormalDuration,
+  } = useLobbySettings(game, isHost, onSettingsChange);
 
   const copyCode = () => {
     navigator.clipboard.writeText(game.roomCode);
@@ -253,6 +266,17 @@ const Lobby = ({
             الأزرق {blueHasSpymaster && blueHasPlayers ? "جاهز ✓" : "غير جاهز"}
           </div>
         </div>
+
+        {/* Timer configuration */}
+        <LobbyTimerConfig
+          settings={settings}
+          isHost={isHost}
+          onToggleTimeLimit={toggleTimeLimit}
+          onToggleSpymasterTimer={toggleSpymasterTimer}
+          onToggleNormalTimer={toggleNormalTimer}
+          onSetSpymasterDuration={setSpymasterDuration}
+          onSetNormalDuration={setNormalDuration}
+        />
 
         {/* Spymaster toggle */}
         <button
