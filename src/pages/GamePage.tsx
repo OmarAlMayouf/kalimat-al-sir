@@ -17,6 +17,8 @@ import TeamSidebar from "@/components/game/TeamSidebar";
 import HistorySidebar from "@/components/game/HistorySidebar";
 import HintInput from "@/components/game/HintInput";
 import TurnTransition from "@/components/game/TurnTransition";
+import AssassinModal from "@/components/game/AssassinModal";
+import TimerEndedModal from "@/components/game/TimerEndedModal";
 import patternBg from "@/assets/pattern-bg.png";
 import { listenToGame, updateGameSession } from "@/lib/gameService";
 import { formatArabicWordCount, getGuessInstruction } from "@/lib/utils";
@@ -28,6 +30,15 @@ const GamePage = () => {
   const [game, setGame] = useState<GameState | null>(null);
   const [showTransition, setShowTransition] = useState(false);
   const [transitionTeam, setTransitionTeam] = useState<Team>("red");
+  const [assassinModal, setAssassinModal] = useState<{
+    losingTeam: Team;
+    word: string;
+    onDone: () => void;
+  } | null>(null);
+  const [timerEndedModal, setTimerEndedModal] = useState<{
+    team: Team;
+    phase: "hint" | "guessing";
+  } | null>(null);
   const playerId = sessionStorage.getItem("playerId") || "";
 
   useEffect(() => {
@@ -45,6 +56,11 @@ const GamePage = () => {
     currentGame: GameState,
     entry: HistoryEntry,
   ): HistoryEntry[] => [...(currentGame.history ?? []), entry];
+
+  const clearHighlights = (state: GameState): GameState => ({
+    ...state,
+    cards: state.cards.map((c) => ({ ...c, highlighted: false })),
+  });
 
   const handleStartGame = () => {
     if (!game) return;
@@ -110,7 +126,7 @@ const GamePage = () => {
     const prevTeam = game.currentTeam;
     let newState = revealCard(game, index);
 
-    // If turn switched to hint phase, correct the timer to spymasterDuration
+    // Correct timer for hint phase
     if (newState.phase === "playing" && newState.turnPhase === "hint") {
       const ls = game.lobbySettings;
       const spymasterMaxTime =
@@ -125,11 +141,41 @@ const GamePage = () => {
     }
 
     newState = { ...newState, history: appendHistory(newState, guessEntry) };
-    saveGame(newState);
 
-    if (newState.phase === "playing" && newState.currentTeam !== prevTeam) {
-      setTransitionTeam(newState.currentTeam);
-      setShowTransition(true);
+    if (card.type === "assassin") {
+      // Step 1: save intermediate state — card is revealed but phase stays "playing"
+      // so GameOverDialog does NOT render yet
+      const intermediateState: typeof newState = {
+        ...newState,
+        phase: "playing",
+      };
+      saveGame(intermediateState);
+
+      // Step 2: after flip animation, show assassin modal
+      setTimeout(() => {
+        setAssassinModal({
+          losingTeam: prevTeam,
+          word: card.word.word,
+          onDone: () => {
+            // Step 3: after modal, commit the real finished state
+            setAssassinModal(null);
+            saveGame(newState);
+          },
+        });
+      }, 650);
+    } else {
+      // Normal card: save immediately so flip plays in real-time for all
+      saveGame(newState);
+
+      // Delay turn transition by 700ms to let the flip finish
+      setTimeout(() => {
+        if (newState.phase === "playing" && newState.currentTeam !== prevTeam) {
+          // Clear highlights now that the turn has switched
+          saveGame(clearHighlights(newState));
+          setTransitionTeam(newState.currentTeam);
+          setShowTransition(true);
+        }
+      }, 700);
     }
   };
 
@@ -164,16 +210,18 @@ const GamePage = () => {
       reason: "manual",
       timestamp: Date.now(),
     };
-    saveGame({
-      ...game,
-      currentTeam: nextTeam,
-      timer: spymasterMaxTime,
-      maxTime: spymasterMaxTime,
-      turnPhase: "hint",
-      currentHint: null,
-      guessesRemaining: 0,
-      history: appendHistory(game, turnEndEntry),
-    });
+    saveGame(
+      clearHighlights({
+        ...game,
+        currentTeam: nextTeam,
+        timer: spymasterMaxTime,
+        maxTime: spymasterMaxTime,
+        turnPhase: "hint",
+        currentHint: null,
+        guessesRemaining: 0,
+        history: appendHistory(game, turnEndEntry),
+      }),
+    );
     setTransitionTeam(nextTeam);
     setShowTransition(true);
   };
@@ -245,6 +293,12 @@ const GamePage = () => {
           reason: "timeout",
           timestamp: Date.now(),
         };
+
+        setTimerEndedModal({
+          team: game.currentTeam,
+          phase: isHintPhase ? "hint" : "guessing",
+        });
+
         await updateGameSession(game.roomCode, {
           currentTeam: nextTeam,
           timer: nextSpymasterMaxTime,
@@ -252,6 +306,7 @@ const GamePage = () => {
           turnPhase: "hint",
           currentHint: null,
           guessesRemaining: 0,
+          cards: game.cards.map((c) => ({ ...c, highlighted: false })),
           history: appendHistory(game, turnEndEntry),
         });
       } else {
@@ -429,6 +484,22 @@ const GamePage = () => {
         <TurnTransition
           team={transitionTeam}
           onComplete={() => setShowTransition(false)}
+        />
+      )}
+
+      {assassinModal && (
+        <AssassinModal
+          losingTeam={assassinModal.losingTeam}
+          word={assassinModal.word}
+          onComplete={assassinModal.onDone}
+        />
+      )}
+
+      {timerEndedModal && (
+        <TimerEndedModal
+          team={timerEndedModal.team}
+          phase={timerEndedModal.phase}
+          onComplete={() => setTimerEndedModal(null)}
         />
       )}
     </div>
