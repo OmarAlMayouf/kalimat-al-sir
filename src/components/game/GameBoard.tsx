@@ -92,7 +92,7 @@ const GameBoard = ({
   return (
     <div className="flex-1 px-2 py-3 sm:px-3 sm:py-4">
       <div
-        className="w-full max-w-4xl mx-auto grid grid-cols-5 gap-1.5 sm:gap-2"
+        className="w-full max-w-3xl mx-auto grid grid-cols-5 gap-1.5 sm:gap-2"
         style={{ gridAutoRows: "1fr", aspectRatio: "5 / 5" }}
       >
         {cards.map((card, index) => (

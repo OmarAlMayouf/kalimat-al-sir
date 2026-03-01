@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import {
   GameState,
+  HistoryEntry,
   LobbySettings,
   revealCard,
   Team,
@@ -13,10 +14,13 @@ import Lobby from "@/components/game/Lobby";
 import GameHeader from "@/components/game/GameHeader";
 import GameOverDialog from "@/components/game/GameOverDialog";
 import TeamSidebar from "@/components/game/TeamSidebar";
+import HistorySidebar from "@/components/game/HistorySidebar";
 import HintInput from "@/components/game/HintInput";
 import TurnTransition from "@/components/game/TurnTransition";
 import patternBg from "@/assets/pattern-bg.png";
 import { listenToGame, updateGameSession } from "@/lib/gameService";
+import { formatArabicWordCount, getGuessInstruction } from "@/lib/utils";
+import { useGameHistory } from "@/hooks/useGameHistory";
 
 const GamePage = () => {
   const { roomCode } = useParams<{ roomCode: string }>();
@@ -36,6 +40,11 @@ const GamePage = () => {
     setGame(newState);
     await updateGameSession(newState.roomCode, newState);
   }, []);
+
+  const appendHistory = (
+    currentGame: GameState,
+    entry: HistoryEntry,
+  ): HistoryEntry[] => [...(currentGame.history ?? []), entry];
 
   const handleStartGame = () => {
     if (!game) return;
@@ -61,6 +70,13 @@ const GamePage = () => {
     const ls = game.lobbySettings;
     const normalTimerOn = ls?.timeLimitEnabled && ls?.normalTimerEnabled;
     const guessingMaxTime = normalTimerOn ? ls.normalDuration : 0;
+    const hintEntry: HistoryEntry = {
+      type: "hint",
+      team: game.currentTeam,
+      word,
+      amount: count,
+      timestamp: Date.now(),
+    };
     saveGame({
       ...game,
       turnPhase: "guessing",
@@ -68,6 +84,7 @@ const GamePage = () => {
       guessesRemaining: count + 1,
       maxTime: guessingMaxTime,
       timer: guessingMaxTime,
+      history: appendHistory(game, hintEntry),
     });
   };
 
@@ -78,6 +95,17 @@ const GamePage = () => {
     if (!currentPlayer) return;
     if (currentPlayer.team !== game.currentTeam) return;
     if (currentPlayer.isSpymaster) return;
+
+    const card = game.cards[index];
+    if (card.revealed) return;
+
+    const guessEntry: HistoryEntry = {
+      type: "guess",
+      player: currentPlayer.name,
+      word: card.word.word,
+      color: card.type,
+      timestamp: Date.now(),
+    };
 
     const prevTeam = game.currentTeam;
     let newState = revealCard(game, index);
@@ -96,6 +124,7 @@ const GamePage = () => {
       };
     }
 
+    newState = { ...newState, history: appendHistory(newState, guessEntry) };
     saveGame(newState);
 
     if (newState.phase === "playing" && newState.currentTeam !== prevTeam) {
@@ -129,6 +158,12 @@ const GamePage = () => {
       ls?.timeLimitEnabled && ls?.spymasterTimerEnabled
         ? ls.spymasterDuration
         : 0;
+    const turnEndEntry: HistoryEntry = {
+      type: "turn_end",
+      team: game.currentTeam,
+      reason: "manual",
+      timestamp: Date.now(),
+    };
     saveGame({
       ...game,
       currentTeam: nextTeam,
@@ -137,6 +172,7 @@ const GamePage = () => {
       turnPhase: "hint",
       currentHint: null,
       guessesRemaining: 0,
+      history: appendHistory(game, turnEndEntry),
     });
     setTransitionTeam(nextTeam);
     setShowTransition(true);
@@ -180,6 +216,7 @@ const GamePage = () => {
 
   const currentPlayer = game?.players.find((p) => p.id === playerId);
   const isHost = currentPlayer?.isHost;
+  const { history } = useGameHistory(game);
 
   useEffect(() => {
     if (!game || !isHost) return;
@@ -199,33 +236,24 @@ const GamePage = () => {
     const interval = setInterval(async () => {
       if (game.timer <= 0) {
         const nextTeam = game.currentTeam === "red" ? "blue" : "red";
-        if (isHintPhase) {
-          // Spymaster ran out of time → skip to next team's hint phase
-          const nextSpymasterMaxTime = spymasterTimerOn
-            ? ls.spymasterDuration
-            : 0;
-          await updateGameSession(game.roomCode, {
-            currentTeam: nextTeam,
-            timer: nextSpymasterMaxTime,
-            maxTime: nextSpymasterMaxTime,
-            turnPhase: "hint",
-            currentHint: null,
-            guessesRemaining: 0,
-          });
-        } else {
-          // Normal players ran out of time → next team's hint phase
-          const nextSpymasterMaxTime = spymasterTimerOn
-            ? ls.spymasterDuration
-            : 0;
-          await updateGameSession(game.roomCode, {
-            currentTeam: nextTeam,
-            timer: nextSpymasterMaxTime,
-            maxTime: nextSpymasterMaxTime,
-            turnPhase: "hint",
-            currentHint: null,
-            guessesRemaining: 0,
-          });
-        }
+        const nextSpymasterMaxTime = spymasterTimerOn
+          ? ls.spymasterDuration
+          : 0;
+        const turnEndEntry: HistoryEntry = {
+          type: "turn_end",
+          team: game.currentTeam,
+          reason: "timeout",
+          timestamp: Date.now(),
+        };
+        await updateGameSession(game.roomCode, {
+          currentTeam: nextTeam,
+          timer: nextSpymasterMaxTime,
+          maxTime: nextSpymasterMaxTime,
+          turnPhase: "hint",
+          currentHint: null,
+          guessesRemaining: 0,
+          history: appendHistory(game, turnEndEntry),
+        });
       } else {
         await updateGameSession(game.roomCode, { timer: game.timer - 1 });
       }
@@ -269,7 +297,7 @@ const GamePage = () => {
             <GameHeader game={game} onEndTurn={handleEndTurn} />
 
             <div className="flex-1 flex overflow-hidden">
-              {/* Desktop sidebar */}
+              {/* Desktop left sidebar — teams */}
               <div className="hidden md:flex flex-col w-48 p-3 gap-3 shrink-0">
                 <TeamSidebar game={game} team="red" />
                 <TeamSidebar game={game} team="blue" />
@@ -327,20 +355,32 @@ const GamePage = () => {
                           : "bg-team-blue/5 border-team-blue/20"
                       }`}
                     >
-                      <div className="flex items-center justify-center gap-3">
-                        <span className="font-bold text-base text-foreground">
-                          {game.currentHint.word}
-                        </span>
-                        <span className="text-sm text-muted-foreground">
-                          ({game.currentHint.count})
-                        </span>
-                        <span className="text-sm font-semibold text-gold">
-                          ·{" "}
-                          {game.guessesRemaining > 0
-                            ? game.guessesRemaining
-                            : 0}{" "}
-                          متبقي
-                        </span>
+                      <div className="flex flex-col items-center gap-1">
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs text-muted-foreground">
+                            التلميح:
+                          </span>
+                          <span className="font-bold text-base text-foreground">
+                            {game.currentHint.word}
+                          </span>
+                          <span className="text-xs text-muted-foreground">
+                            ({formatArabicWordCount(game.currentHint.count)})
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-2 text-xs">
+                          <span className="text-muted-foreground">
+                            {getGuessInstruction(
+                              game.currentHint.count,
+                              game.players.filter(
+                                (p) =>
+                                  p.team === game.currentTeam && !p.isSpymaster,
+                              ).length,
+                            )}
+                          </span>
+                          <span className="text-gold font-semibold">
+                            · {game.guessesRemaining} متبقي
+                          </span>
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -355,6 +395,11 @@ const GamePage = () => {
                   currentTeam={game.currentTeam}
                   canGuess={canGuess}
                 />
+              </div>
+
+              {/* Desktop right sidebar — history */}
+              <div className="hidden md:flex flex-col w-44 p-3 shrink-0">
+                <HistorySidebar history={history} />
               </div>
             </div>
 

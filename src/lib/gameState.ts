@@ -42,6 +42,28 @@ export const DEFAULT_LOBBY_SETTINGS: LobbySettings = {
   normalDuration: 60,
 };
 
+export type HistoryEntry =
+  | {
+      type: "hint";
+      team: Team;
+      word: string;
+      amount: number;
+      timestamp: number;
+    }
+  | {
+      type: "guess";
+      player: string;
+      word: string;
+      color: CardType;
+      timestamp: number;
+    }
+  | {
+      type: "turn_end";
+      team: Team;
+      reason: "manual" | "timeout";
+      timestamp: number;
+    };
+
 export interface GameState {
   roomCode: string;
   phase: GamePhase;
@@ -58,6 +80,7 @@ export interface GameState {
   currentHint: Hint | null;
   guessesRemaining: number;
   lobbySettings: LobbySettings;
+  history: HistoryEntry[];
 }
 
 export interface Player {
@@ -131,6 +154,7 @@ export function createGame(hostName: string): GameState {
     currentHint: null,
     guessesRemaining: 0,
     lobbySettings: { ...DEFAULT_LOBBY_SETTINGS },
+    history: [],
   };
 }
 
