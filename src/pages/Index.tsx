@@ -8,7 +8,7 @@ import {
   joinGameSession,
   updateGameSession,
 } from "@/lib/gameService";
-import { Users, Plus, LogIn, ArrowLeft } from "lucide-react";
+import { Users, Plus, LogIn, ArrowLeft, BookOpen } from "lucide-react";
 
 const Index = () => {
   const navigate = useNavigate();
@@ -104,8 +104,17 @@ const Index = () => {
               انضم لغرفة
             </button>
 
+            {/* Rules button */}
+            <button
+              onClick={() => navigate("/rules")}
+              className="w-full h-12 rounded-2xl bg-transparent border border-border/40 text-muted-foreground font-medium text-sm flex items-center justify-center gap-2 hover:border-primary/30 hover:text-foreground transition-all duration-200"
+            >
+              <BookOpen className="w-4 h-4" />
+              قواعد اللعبة
+            </button>
+
             {/* Decorative player count hint */}
-            <div className="flex items-center justify-center gap-1.5 pt-3 text-xs text-muted-foreground">
+            <div className="flex items-center justify-center gap-1.5 pt-1 text-xs text-muted-foreground">
               <Users className="w-3.5 h-3.5" />
               <span>٤ لاعبين أو أكثر للعب</span>
             </div>
