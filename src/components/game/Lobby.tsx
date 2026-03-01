@@ -63,7 +63,15 @@ const Lobby = ({
           </Button>
           <div className="flex items-center gap-1.5 text-muted-foreground text-xs">
             <Users className="w-3.5 h-3.5" />
-            <span>{game.players.length} لاعب</span>
+            <span>
+              {(() => {
+                const n = game.players.length;
+                if (n === 1) return "لاعب";
+                if (n === 2) return "لاعبين";
+                if (n >= 11) return `${n} لاعب`;
+                return `${n} لاعبين`;
+              })()}
+            </span>
           </div>
         </div>
 
