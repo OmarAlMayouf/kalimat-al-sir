@@ -1,9 +1,9 @@
-import { getRandomWords, Word } from '@/data/words';
+import { getRandomWords, Word } from "@/data/words";
 
-export type Team = 'red' | 'blue';
-export type CardType = 'red' | 'blue' | 'neutral' | 'assassin';
-export type GamePhase = 'lobby' | 'playing' | 'finished';
-export type TurnPhase = 'hint' | 'guessing';
+export type Team = "red" | "blue";
+export type CardType = "red" | "blue" | "neutral" | "assassin";
+export type GamePhase = "lobby" | "playing" | "finished";
+export type TurnPhase = "hint" | "guessing";
 
 export interface GameCard {
   word: Word;
@@ -43,8 +43,8 @@ export interface Player {
 }
 
 function generateRoomCode(): string {
-  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
-  let code = '';
+  const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+  let code = "";
   for (let i = 0; i < 5; i++) {
     code += chars.charAt(Math.floor(Math.random() * chars.length));
   }
@@ -52,23 +52,23 @@ function generateRoomCode(): string {
 }
 
 function assignCardTypes(startingTeam: Team): CardType[] {
-    const types: CardType[] = [];
+  const types: CardType[] = [];
 
-    const redCount = startingTeam === 'red' ? 9 : 8;
-    const blueCount = startingTeam === 'blue' ? 9 : 8;
+  const redCount = startingTeam === "red" ? 9 : 8;
+  const blueCount = startingTeam === "blue" ? 9 : 8;
 
-    for (let i = 0; i < redCount; i++) types.push('red');
-    for (let i = 0; i < blueCount; i++) types.push('blue');
-    for (let i = 0; i < 7; i++) types.push('neutral');
-    types.push('assassin');
+  for (let i = 0; i < redCount; i++) types.push("red");
+  for (let i = 0; i < blueCount; i++) types.push("blue");
+  for (let i = 0; i < 7; i++) types.push("neutral");
+  types.push("assassin");
 
-    return types.sort(() => Math.random() - 0.5);
+  return types.sort(() => Math.random() - 0.5);
 }
 
 export function createGame(hostName: string): GameState {
   const words = getRandomWords(25);
-    const startingTeam: Team = Math.random() < 0.5 ? 'red' : 'blue';
-    const types = assignCardTypes(startingTeam);
+  const startingTeam: Team = Math.random() < 0.5 ? "red" : "blue";
+  const types = assignCardTypes(startingTeam);
   const cards: GameCard[] = words.map((word, i) => ({
     word,
     type: types[i],
@@ -80,24 +80,26 @@ export function createGame(hostName: string): GameState {
 
   return {
     roomCode: generateRoomCode(),
-    phase: 'lobby',
-    turnPhase: 'hint',
+    phase: "lobby",
+    turnPhase: "hint",
     cards,
     currentTeam: startingTeam,
     scores: { red: 0, blue: 0 },
     targetScores: {
-        red: startingTeam === 'red' ? 9 : 8,
-        blue: startingTeam === 'blue' ? 9 : 8,
+      red: startingTeam === "red" ? 9 : 8,
+      blue: startingTeam === "blue" ? 9 : 8,
     },
     timer: 90,
     maxTime: 90,
-    players: [{
-      id: hostId,
-      name: hostName,
-      team: startingTeam,
-      isSpymaster: false,
-      isHost: true,
-    }],
+    players: [
+      {
+        id: hostId,
+        name: hostName,
+        team: startingTeam,
+        isSpymaster: false,
+        isHost: true,
+      },
+    ],
     winner: null,
     hostId,
     currentHint: null,
@@ -108,43 +110,43 @@ export function createGame(hostName: string): GameState {
 export function revealCard(state: GameState, cardIndex: number): GameState {
   const newState = { ...state };
   const card = { ...newState.cards[cardIndex] };
-  
+
   if (card.revealed) return state;
-  
+
   card.revealed = true;
   newState.cards = [...state.cards];
   newState.cards[cardIndex] = card;
 
   // Assassin = instant loss
-  if (card.type === 'assassin') {
-    newState.phase = 'finished';
-    newState.winner = state.currentTeam === 'red' ? 'blue' : 'red';
+  if (card.type === "assassin") {
+    newState.phase = "finished";
+    newState.winner = state.currentTeam === "red" ? "blue" : "red";
     return newState;
   }
 
   // Score the card
-  if (card.type === 'red') {
+  if (card.type === "red") {
     newState.scores = { ...state.scores, red: state.scores.red + 1 };
-  } else if (card.type === 'blue') {
+  } else if (card.type === "blue") {
     newState.scores = { ...state.scores, blue: state.scores.blue + 1 };
   }
 
   // Check win conditions
   if (newState.scores.red >= newState.targetScores.red) {
-    newState.phase = 'finished';
-    newState.winner = 'red';
+    newState.phase = "finished";
+    newState.winner = "red";
     return newState;
   } else if (newState.scores.blue >= newState.targetScores.blue) {
-    newState.phase = 'finished';
-    newState.winner = 'blue';
+    newState.phase = "finished";
+    newState.winner = "blue";
     return newState;
   }
 
   // Neutral or wrong team → end turn immediately
   if (card.type !== state.currentTeam) {
-    newState.currentTeam = state.currentTeam === 'red' ? 'blue' : 'red';
+    newState.currentTeam = state.currentTeam === "red" ? "blue" : "red";
     newState.timer = newState.maxTime;
-    newState.turnPhase = 'hint';
+    newState.turnPhase = "hint";
     newState.currentHint = null;
     newState.guessesRemaining = 0;
     return newState;
@@ -153,16 +155,19 @@ export function revealCard(state: GameState, cardIndex: number): GameState {
   // Correct team card → decrement guesses
   newState.guessesRemaining = Math.max(0, state.guessesRemaining - 1);
   if (newState.guessesRemaining === 0) {
-    newState.currentTeam = state.currentTeam === 'red' ? 'blue' : 'red';
+    newState.currentTeam = state.currentTeam === "red" ? "blue" : "red";
     newState.timer = newState.maxTime;
-    newState.turnPhase = 'hint';
+    newState.turnPhase = "hint";
     newState.currentHint = null;
   }
 
   return newState;
 }
 
-export function toggleHighlight(state: GameState, cardIndex: number): GameState {
+export function toggleHighlight(
+  state: GameState,
+  cardIndex: number,
+): GameState {
   const newState = { ...state };
   newState.cards = [...state.cards];
   newState.cards[cardIndex] = {
