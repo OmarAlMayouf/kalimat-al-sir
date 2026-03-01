@@ -25,6 +25,19 @@ const GameBoard = ({
 }: GameBoardProps) => {
   const getCardStyle = (card: GameCard) => {
     if (card.revealed) {
+      // Spymaster sees revealed cards as clearly "done" — dimmed with a checkmark overlay
+      if (isSpymaster) {
+        switch (card.type) {
+          case "red":
+            return "bg-red-900/50 text-red-300/60 border-red-900/40 opacity-50 line-through";
+          case "blue":
+            return "bg-blue-900/50 text-blue-300/60 border-blue-900/40 opacity-50 line-through";
+          case "assassin":
+            return "bg-gray-950 text-gray-600 border-gray-800 opacity-50 line-through";
+          default:
+            return "bg-muted/30 text-muted-foreground/40 border-muted/20 opacity-50 line-through";
+        }
+      }
       switch (card.type) {
         case "red":
           return "bg-team-red text-white border-team-red shadow-inner";
@@ -59,7 +72,7 @@ const GameBoard = ({
       }
 
       const highlightRing = card.highlighted
-        ? "ring-2 ring-gold shadow-[0_0_12px_hsl(var(--gold)/0.4)]"
+        ? "ring-[3px] ring-gold border-gold shadow-[0_0_24px_hsl(var(--gold)/0.8),inset_0_0_12px_hsl(var(--gold)/0.25)] scale-[1.08] z-10 brightness-110"
         : "";
 
       return `${baseStyle} ${highlightRing}`;
@@ -121,6 +134,16 @@ const GameBoard = ({
             </span>
             {card?.revealed && card.type === "assassin" && (
               <span className="absolute top-1 right-1 text-[10px]">💀</span>
+            )}
+            {card?.revealed && isSpymaster && (
+              <span className="absolute inset-0 flex items-center justify-center rounded-xl pointer-events-none">
+                <span className="text-lg opacity-40">✕</span>
+              </span>
+            )}
+            {!card?.revealed && isSpymaster && card.highlighted && (
+              <span className="absolute top-1 right-1 flex items-center justify-center w-4 h-4 rounded-full bg-gold text-[9px] font-black text-black shadow-md">
+                ✓
+              </span>
             )}
           </button>
         ))}
