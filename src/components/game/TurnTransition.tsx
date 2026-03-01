@@ -1,5 +1,5 @@
 import { Team } from "@/lib/gameState";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 interface TurnTransitionProps {
   team: Team;
@@ -9,18 +9,20 @@ interface TurnTransitionProps {
 const TurnTransition = ({ team, onComplete }: TurnTransitionProps) => {
   const [visible, setVisible] = useState(true);
   const [exiting, setExiting] = useState(false);
+  const onCompleteRef = useRef(onComplete);
+  onCompleteRef.current = onComplete;
 
   useEffect(() => {
     const exitTimer = setTimeout(() => setExiting(true), 1600);
     const doneTimer = setTimeout(() => {
       setVisible(false);
-      onComplete();
+      onCompleteRef.current();
     }, 2000);
     return () => {
       clearTimeout(exitTimer);
       clearTimeout(doneTimer);
     };
-  }, [onComplete]);
+  }, []);
 
   if (!visible) return null;
 

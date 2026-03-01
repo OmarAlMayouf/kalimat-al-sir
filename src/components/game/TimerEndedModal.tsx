@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Team } from "@/lib/gameState";
 
 interface TimerEndedModalProps {
@@ -9,17 +9,19 @@ interface TimerEndedModalProps {
 
 const TimerEndedModal = ({ team, phase, onComplete }: TimerEndedModalProps) => {
   const [visible, setVisible] = useState<"enter" | "hold" | "exit">("enter");
+  const onCompleteRef = useRef(onComplete);
+  onCompleteRef.current = onComplete;
 
   useEffect(() => {
     const hold = setTimeout(() => setVisible("hold"), 80);
     const exit = setTimeout(() => setVisible("exit"), 2400);
-    const done = setTimeout(() => onComplete(), 2800);
+    const done = setTimeout(() => onCompleteRef.current(), 2800);
     return () => {
       clearTimeout(hold);
       clearTimeout(exit);
       clearTimeout(done);
     };
-  }, [onComplete]);
+  }, []);
 
   const isRed = team === "red";
   const isHint = phase === "hint";

@@ -497,9 +497,15 @@ const GamePage = () => {
 
       {timerEndedModal && (
         <TimerEndedModal
+          key={`${timerEndedModal.team}-${timerEndedModal.phase}`}
           team={timerEndedModal.team}
           phase={timerEndedModal.phase}
-          onComplete={() => setTimerEndedModal(null)}
+          onComplete={() => {
+            const nextTeam = timerEndedModal.team === "red" ? "blue" : "red";
+            setTimerEndedModal(null);
+            setTransitionTeam(nextTeam);
+            setShowTransition(true);
+          }}
         />
       )}
     </div>
