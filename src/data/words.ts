@@ -5,117 +5,132 @@ export interface Word {
   region?: string;
 }
 
-export const categories = {
-  food: 'أكلات',
-  cities: 'مدن سعودية',
-  traditions: 'عادات وتقاليد',
-  dialect: 'لهجة عامية',
-  celebrities: 'شخصيات معروفة',
-  landmarks: 'معالم',
-  animals: 'حيوانات',
-  sports: 'رياضة',
-} as const;
+export const wordDatabase = [
+    // ===== FOOD =====
+    { word: 'كبسة', category: 'food', difficulty: 'easy' },
+    { word: 'مندي', category: 'food', difficulty: 'easy' },
+    { word: 'جريش', category: 'food', difficulty: 'easy' },
+    { word: 'مرقوق', category: 'food', difficulty: 'medium' },
+    { word: 'مطازيز', category: 'food', difficulty: 'medium' },
+    { word: 'قرصان', category: 'food', difficulty: 'medium' },
+    { word: 'عريكة', category: 'food', difficulty: 'easy' },
+    { word: 'سليق', category: 'food', difficulty: 'easy' },
+    { word: 'معصوب', category: 'food', difficulty: 'easy' },
+    { word: 'حنيني', category: 'food', difficulty: 'medium' },
+    { word: 'كليجا', category: 'food', difficulty: 'medium' },
+    { word: 'مضبي', category: 'food', difficulty: 'hard' },
+    { word: 'سمبوسة', category: 'food', difficulty: 'easy' },
+    { word: 'تمر', category: 'food', difficulty: 'easy' },
+    { word: 'هريسة', category: 'food', difficulty: 'easy' },
 
-export const wordDatabase: Word[] = [
-  // أكلات
-  { word: 'كبسة', category: 'أكلات', difficulty: 'easy', region: 'عام' },
-  { word: 'جريش', category: 'أكلات', difficulty: 'easy', region: 'نجد' },
-  { word: 'مطبق', category: 'أكلات', difficulty: 'easy', region: 'حجاز' },
-  { word: 'عريكة', category: 'أكلات', difficulty: 'easy', region: 'جنوب' },
-  { word: 'مرقوق', category: 'أكلات', difficulty: 'medium', region: 'نجد' },
-  { word: 'سليق', category: 'أكلات', difficulty: 'easy', region: 'حجاز' },
-  { word: 'هريسة', category: 'أكلات', difficulty: 'easy', region: 'عام' },
-  { word: 'معصوب', category: 'أكلات', difficulty: 'easy', region: 'حجاز' },
-  { word: 'مندي', category: 'أكلات', difficulty: 'easy', region: 'جنوب' },
-  { word: 'حنيني', category: 'أكلات', difficulty: 'medium', region: 'نجد' },
-  { word: 'مطازيز', category: 'أكلات', difficulty: 'medium', region: 'نجد' },
-  { word: 'صالونة', category: 'أكلات', difficulty: 'easy', region: 'عام' },
-  { word: 'مضبي', category: 'أكلات', difficulty: 'hard', region: 'جنوب' },
-  { word: 'قرصان', category: 'أكلات', difficulty: 'medium', region: 'نجد' },
-  { word: 'كليجا', category: 'أكلات', difficulty: 'medium', region: 'قصيم' },
+    // ===== CITIES =====
+    { word: 'الرياض', category: 'cities', difficulty: 'easy' },
+    { word: 'جدة', category: 'cities', difficulty: 'easy' },
+    { word: 'مكة', category: 'cities', difficulty: 'easy' },
+    { word: 'المدينة', category: 'cities', difficulty: 'easy' },
+    { word: 'الدمام', category: 'cities', difficulty: 'easy' },
+    { word: 'الخبر', category: 'cities', difficulty: 'easy' },
+    { word: 'أبها', category: 'cities', difficulty: 'easy' },
+    { word: 'تبوك', category: 'cities', difficulty: 'easy' },
+    { word: 'حائل', category: 'cities', difficulty: 'easy' },
+    { word: 'نجران', category: 'cities', difficulty: 'easy' },
+    { word: 'العلا', category: 'cities', difficulty: 'medium' },
+    { word: 'الطائف', category: 'cities', difficulty: 'easy' },
+    { word: 'جازان', category: 'cities', difficulty: 'easy' },
 
-  // مدن سعودية
-  { word: 'الرياض', category: 'مدن سعودية', difficulty: 'easy' },
-  { word: 'جدة', category: 'مدن سعودية', difficulty: 'easy' },
-  { word: 'مكة', category: 'مدن سعودية', difficulty: 'easy' },
-  { word: 'المدينة', category: 'مدن سعودية', difficulty: 'easy' },
-  { word: 'أبها', category: 'مدن سعودية', difficulty: 'easy' },
-  { word: 'الطائف', category: 'مدن سعودية', difficulty: 'easy' },
-  { word: 'تبوك', category: 'مدن سعودية', difficulty: 'easy' },
-  { word: 'الدمام', category: 'مدن سعودية', difficulty: 'easy' },
-  { word: 'العلا', category: 'مدن سعودية', difficulty: 'medium' },
-  { word: 'نيوم', category: 'مدن سعودية', difficulty: 'medium' },
-  { word: 'الخبر', category: 'مدن سعودية', difficulty: 'easy' },
-  { word: 'حائل', category: 'مدن سعودية', difficulty: 'easy' },
-  { word: 'نجران', category: 'مدن سعودية', difficulty: 'easy' },
-  { word: 'الباحة', category: 'مدن سعودية', difficulty: 'medium' },
-  { word: 'جازان', category: 'مدن سعودية', difficulty: 'easy' },
+    // ===== TRADITIONS =====
+    { word: 'العرضة', category: 'traditions', difficulty: 'easy' },
+    { word: 'البشت', category: 'traditions', difficulty: 'medium' },
+    { word: 'العقال', category: 'traditions', difficulty: 'easy' },
+    { word: 'الغترة', category: 'traditions', difficulty: 'easy' },
+    { word: 'الشماغ', category: 'traditions', difficulty: 'easy' },
+    { word: 'السدو', category: 'traditions', difficulty: 'hard' },
+    { word: 'المجلس', category: 'traditions', difficulty: 'easy' },
+    { word: 'الدلال', category: 'traditions', difficulty: 'easy' },
+    { word: 'المزمار', category: 'traditions', difficulty: 'medium' },
+    { word: 'التمر', category: 'traditions', difficulty: 'easy' },
 
-  // عادات وتقاليد
-  { word: 'العرضة', category: 'عادات وتقاليد', difficulty: 'easy' },
-  { word: 'الدلال', category: 'عادات وتقاليد', difficulty: 'easy' },
-  { word: 'البخور', category: 'عادات وتقاليد', difficulty: 'easy' },
-  { word: 'المجلس', category: 'عادات وتقاليد', difficulty: 'easy' },
-  { word: 'الفزعة', category: 'عادات وتقاليد', difficulty: 'medium' },
-  { word: 'البشت', category: 'عادات وتقاليد', difficulty: 'medium' },
-  { word: 'السدو', category: 'عادات وتقاليد', difficulty: 'hard' },
-  { word: 'المزمار', category: 'عادات وتقاليد', difficulty: 'medium' },
-  { word: 'الشيلة', category: 'عادات وتقاليد', difficulty: 'easy' },
-  { word: 'العقال', category: 'عادات وتقاليد', difficulty: 'easy' },
-  { word: 'الغترة', category: 'عادات وتقاليد', difficulty: 'easy' },
-  { word: 'الشماغ', category: 'عادات وتقاليد', difficulty: 'easy' },
-  { word: 'التمر', category: 'عادات وتقاليد', difficulty: 'easy' },
-  { word: 'القهوة', category: 'عادات وتقاليد', difficulty: 'easy' },
-  { word: 'الخنجر', category: 'عادات وتقاليد', difficulty: 'medium' },
+    // ===== DIALECT (CLEAN ONLY) =====
+    { word: 'سنعة', category: 'dialect', difficulty: 'medium' },
+    { word: 'كشخة', category: 'dialect', difficulty: 'easy' },
+    { word: 'هرجة', category: 'dialect', difficulty: 'easy' },
+    { word: 'مشوار', category: 'dialect', difficulty: 'easy' },
+    { word: 'زحمة', category: 'dialect', difficulty: 'easy' },
+    { word: 'خشم', category: 'dialect', difficulty: 'medium' },
+    { word: 'حيل', category: 'dialect', difficulty: 'easy' },
 
-  // لهجة عامية
-  { word: 'طناخ', category: 'لهجة عامية', difficulty: 'medium' },
-  { word: 'هيلق', category: 'لهجة عامية', difficulty: 'hard' },
-  { word: 'قرقوش', category: 'لهجة عامية', difficulty: 'hard' },
-  { word: 'خشم', category: 'لهجة عامية', difficulty: 'medium' },
-  { word: 'حيل', category: 'لهجة عامية', difficulty: 'easy' },
-  { word: 'سنعة', category: 'لهجة عامية', difficulty: 'medium' },
-  { word: 'زحمة', category: 'لهجة عامية', difficulty: 'easy' },
-  { word: 'هرجة', category: 'لهجة عامية', difficulty: 'easy' },
-  { word: 'مشوار', category: 'لهجة عامية', difficulty: 'easy' },
-  { word: 'كشخة', category: 'لهجة عامية', difficulty: 'easy' },
+    // ===== CELEBRITIES =====
+    { word: 'محمد عبده', category: 'celebrities', difficulty: 'easy' },
+    { word: 'ماجد عبدالله', category: 'celebrities', difficulty: 'easy' },
+    { word: 'سامي الجابر', category: 'celebrities', difficulty: 'easy' },
+    { word: 'ياسر القحطاني', category: 'celebrities', difficulty: 'easy' },
+    { word: 'طلال مداح', category: 'celebrities', difficulty: 'medium' },
 
-  // شخصيات معروفة
-  { word: 'محمد عبده', category: 'شخصيات معروفة', difficulty: 'easy' },
-  { word: 'ماجد عبدالله', category: 'شخصيات معروفة', difficulty: 'easy' },
-  { word: 'سامي الجابر', category: 'شخصيات معروفة', difficulty: 'easy' },
-  { word: 'طلال مداح', category: 'شخصيات معروفة', difficulty: 'medium' },
-  { word: 'ياسر القحطاني', category: 'شخصيات معروفة', difficulty: 'easy' },
+    // ===== LANDMARKS =====
+    { word: 'الكعبة', category: 'landmarks', difficulty: 'easy' },
+    { word: 'مدائن صالح', category: 'landmarks', difficulty: 'medium' },
+    { word: 'الدرعية', category: 'landmarks', difficulty: 'medium' },
+    { word: 'برج الفيصلية', category: 'landmarks', difficulty: 'easy' },
+    { word: 'المملكة', category: 'landmarks', difficulty: 'easy' },
 
-  // معالم
-  { word: 'الكعبة', category: 'معالم', difficulty: 'easy' },
-  { word: 'مدائن صالح', category: 'معالم', difficulty: 'medium' },
-  { word: 'برج الفيصلية', category: 'معالم', difficulty: 'easy' },
-  { word: 'المملكة', category: 'معالم', difficulty: 'easy' },
-  { word: 'الدرعية', category: 'معالم', difficulty: 'medium' },
-  { word: 'بوليفارد', category: 'معالم', difficulty: 'easy' },
-  { word: 'موسم', category: 'معالم', difficulty: 'easy' },
+    // ===== ANIMALS =====
+    { word: 'صقر', category: 'animals', difficulty: 'easy' },
+    { word: 'ناقة', category: 'animals', difficulty: 'easy' },
+    { word: 'مها', category: 'animals', difficulty: 'medium' },
+    { word: 'وعل', category: 'animals', difficulty: 'hard' },
+    { word: 'ضب', category: 'animals', difficulty: 'medium' },
 
-  // حيوانات
-  { word: 'صقر', category: 'حيوانات', difficulty: 'easy' },
-  { word: 'ناقة', category: 'حيوانات', difficulty: 'easy' },
-  { word: 'مها', category: 'حيوانات', difficulty: 'medium' },
-  { word: 'وعل', category: 'حيوانات', difficulty: 'hard' },
-  { word: 'ضب', category: 'حيوانات', difficulty: 'medium' },
-  { word: 'حمام', category: 'حيوانات', difficulty: 'easy' },
+    // ===== SPORTS =====
+    { word: 'الهلال', category: 'sports', difficulty: 'easy' },
+    { word: 'النصر', category: 'sports', difficulty: 'easy' },
+    { word: 'الاتحاد', category: 'sports', difficulty: 'easy' },
+    { word: 'الأهلي', category: 'sports', difficulty: 'easy' },
+    { word: 'الشباب', category: 'sports', difficulty: 'easy' },
+    { word: 'رالي', category: 'sports', difficulty: 'medium' },
 
-  // رياضة
-  { word: 'الهلال', category: 'رياضة', difficulty: 'easy' },
-  { word: 'النصر', category: 'رياضة', difficulty: 'easy' },
-  { word: 'الأهلي', category: 'رياضة', difficulty: 'easy' },
-  { word: 'الاتحاد', category: 'رياضة', difficulty: 'easy' },
-  { word: 'الشباب', category: 'رياضة', difficulty: 'easy' },
-  { word: 'رالي', category: 'رياضة', difficulty: 'medium' },
+    // ===== NATURE =====
+    { word: 'صحراء', category: 'nature', difficulty: 'easy' },
+    { word: 'نخلة', category: 'nature', difficulty: 'easy' },
+    { word: 'رمل', category: 'nature', difficulty: 'easy' },
+    { word: 'جبل', category: 'nature', difficulty: 'easy' },
+    { word: 'وادي', category: 'nature', difficulty: 'easy' },
+
+    // ===== OBJECTS =====
+    { word: 'مفتاح', category: 'objects', difficulty: 'easy' },
+    { word: 'ساعة', category: 'objects', difficulty: 'easy' },
+    { word: 'هاتف', category: 'objects', difficulty: 'easy' },
+    { word: 'كتاب', category: 'objects', difficulty: 'easy' },
+    { word: 'قلم', category: 'objects', difficulty: 'easy' },
+
+    // ===== PROFESSIONS =====
+    { word: 'طبيب', category: 'professions', difficulty: 'easy' },
+    { word: 'مهندس', category: 'professions', difficulty: 'easy' },
+    { word: 'معلم', category: 'professions', difficulty: 'easy' },
+    { word: 'شرطي', category: 'professions', difficulty: 'easy' },
+    { word: 'تاجر', category: 'professions', difficulty: 'easy' },
 ];
 
-export function getRandomWords(count: number = 25): Word[] {
-  // Validate: only words with max 2 tokens
-  const valid = wordDatabase.filter(w => w.word.split(' ').length <= 2);
-  const shuffled = [...valid].sort(() => Math.random() - 0.5);
-  return shuffled.slice(0, count);
+export function getRandomWords(count: number = 25) {
+    const valid = wordDatabase.filter(
+        w => w.word.trim().split(/\s+/).length <= 2
+    );
+
+    const shuffled = [...valid].sort(() => Math.random() - 0.5);
+
+    const result: typeof wordDatabase = [];
+    const categoryCounter: Record<string, number> = {};
+
+    for (const word of shuffled) {
+        if (result.length >= count) break;
+
+        const cat = word.category;
+        categoryCounter[cat] = categoryCounter[cat] || 0;
+
+        if (categoryCounter[cat] < 4) {
+            result.push(word);
+            categoryCounter[cat]++;
+        }
+    }
+
+    return result;
 }

@@ -1,11 +1,10 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { createGame } from '@/lib/gameState';
 import patternBg from '@/assets/pattern-bg.png';
 import { createGameSession, joinGameSession, updateGameSession } from "@/lib/gameService";
-import { Users, Plus, LogIn, ArrowRight } from 'lucide-react';
+import { Users, Plus, LogIn, ArrowLeft } from 'lucide-react';
 
 const Index = () => {
     const navigate = useNavigate();
@@ -130,7 +129,7 @@ const Index = () => {
                                 {isLoadingCreate ? (
                                     <span className="animate-pulse">جارٍ الإنشاء...</span>
                                 ) : (
-                                    <>ابدأ اللعبة <ArrowRight className="w-4 h-4" /></>
+                                    <>ابدأ اللعبة <ArrowLeft className="w-4 h-4" /></>
                                 )}
                             </button>
                         </div>
@@ -183,7 +182,7 @@ const Index = () => {
                                 {isLoadingJoin ? (
                                     <span className="animate-pulse">جارٍ الانضمام...</span>
                                 ) : (
-                                    <>انضم <ArrowRight className="w-4 h-4" /></>
+                                    <>انضم <ArrowLeft className="w-4 h-4" /></>
                                 )}
                             </button>
                         </div>
