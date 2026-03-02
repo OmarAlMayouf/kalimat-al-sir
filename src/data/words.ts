@@ -371,84 +371,91 @@ export const wordDatabase: Word[] = [
 // ─────────────────────────────────────────────
 
 /**
- * Category weights — higher = more likely to appear.
- * Tuned for fun, culturally rich games with variety.
+ * How many words to pull per selected category.
+ * 25 words / 5 categories = 5 words each → clean, hintable board.
+ * We pick 5 categories, pull 5 words from each.
+ */
+const WORDS_PER_CATEGORY = 5;
+const CATEGORIES_PER_GAME = 5;
+
+/**
+ * Category weights — higher = more likely to be selected for a game.
+ * We bias toward culturally rich, fun categories.
  */
 const CATEGORY_WEIGHTS: Record<string, number> = {
     food: 9,
+    traditions: 9,
+    dialect: 10,
+    landmarks: 8,
     cities: 7,
-    traditions: 8,
-    dialect: 10, // dialect is super fun for Saudi players
     celebrities: 6,
-    landmarks: 7,
-    animals: 6,
-    sports: 7,
-    nature: 6,
-    objects: 5,
-    professions: 5,
-    concepts: 7,
+    animals: 7,
+    sports: 8,
+    nature: 7,
+    concepts: 8,
     entertainment: 8,
-    transportation: 4,
-    technology: 5,
+    professions: 6,
+    objects: 5,
+    transportation: 5,
+    technology: 6,
 };
-
-/**
- * Max words allowed per category in a single 25-card game.
- * Prevents any one category from dominating the board.
- */
-const MAX_PER_CATEGORY = 3;
-
-/**
- * Words that would be too ambiguous or too easy to pass as Codenames hints
- * (e.g., one-letter words, extremely common fillers).
- */
-const WORD_LENGTH_MIN = 2; // minimum word character length
 
 function isValidWord(word: Word): boolean {
     const parts = word.word.trim().split(/\s+/);
-    // Max 2 tokens (no 3-word phrases)
     if (parts.length > 2) return false;
-    // Min character length
-    if (word.word.replace(/\s/g, "").length < WORD_LENGTH_MIN) return false;
+    if (word.word.replace(/\s/g, "").length < 2) return false;
     return true;
 }
 
-/**
- * Weighted random selection from a list of (item, weight) pairs.
- */
-function weightedSample<T>(
-    pool: Array<{ item: T; weight: number }>,
-    count: number,
-): T[] {
-    const results: T[] = [];
-    const available = [...pool];
+/** Fisher-Yates shuffle */
+function shuffle<T>(arr: T[]): T[] {
+    const a = [...arr];
+    for (let i = a.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [a[i], a[j]] = [a[j], a[i]];
+    }
+    return a;
+}
 
-    for (let i = 0; i < count && available.length > 0; i++) {
-        const totalWeight = available.reduce((sum, e) => sum + e.weight, 0);
-        let rand = Math.random() * totalWeight;
+/**
+ * Pick N categories using weighted random sampling WITHOUT replacement.
+ * This ensures we get exactly CATEGORIES_PER_GAME distinct categories.
+ */
+function pickCategories(available: string[], count: number): string[] {
+    const pool = available.map((cat) => ({
+        cat,
+        weight: CATEGORY_WEIGHTS[cat] ?? 5,
+    }));
+
+    const selected: string[] = [];
+
+    while (selected.length < count && pool.length > 0) {
+        const total = pool.reduce((sum, e) => sum + e.weight, 0);
+        let rand = Math.random() * total;
         let idx = 0;
-        for (; idx < available.length; idx++) {
-            rand -= available[idx].weight;
+        for (; idx < pool.length - 1; idx++) {
+            rand -= pool[idx].weight;
             if (rand <= 0) break;
         }
-        idx = Math.min(idx, available.length - 1);
-        results.push(available[idx].item);
-        available.splice(idx, 1);
+        selected.push(pool[idx].cat);
+        pool.splice(idx, 1);
     }
 
-    return results;
+    return selected;
 }
 
 /**
  * Production-grade word selector.
  *
  * Strategy:
- * 1. Filter invalid words.
- * 2. Group words by category.
- * 3. Use weighted random to pick categories proportionally.
- * 4. Within each chosen category, pick uniformly at random.
- * 5. Enforce MAX_PER_CATEGORY cap to guarantee variety.
- * 6. Shuffle the final 25 cards so category clusters don't appear together.
+ * 1. Group all valid words by category.
+ * 2. Only consider categories that have enough words (≥ WORDS_PER_CATEGORY).
+ * 3. Weighted-randomly pick exactly CATEGORIES_PER_GAME categories.
+ * 4. From each selected category, randomly pick exactly WORDS_PER_CATEGORY words.
+ * 5. Shuffle the final 25 cards to distribute categories across the board.
+ *
+ * Result: Every game has exactly 5 categories × 5 words = 25 cards.
+ * Spymasters can craft meaningful hints; players face real thematic ambiguity.
  */
 export function getRandomWords(count: number = 25): Word[] {
     const valid = wordDatabase.filter(isValidWord);
@@ -460,57 +467,35 @@ export function getRandomWords(count: number = 25): Word[] {
         byCategory[word.category].push(word);
     }
 
-    // Shuffle words within each category
-    for (const cat in byCategory) {
-        byCategory[cat] = byCategory[cat].sort(() => Math.random() - 0.5);
-    }
+    // Only use categories with enough words
+    const eligibleCategories = Object.keys(byCategory).filter(
+        (cat) => byCategory[cat].length >= WORDS_PER_CATEGORY
+    );
 
-    const categoryPointers: Record<string, number> = {};
-    for (const cat in byCategory) categoryPointers[cat] = 0;
+    const wordsPerCat = Math.floor(count / CATEGORIES_PER_GAME);
+    const numCategories = Math.min(CATEGORIES_PER_GAME, eligibleCategories.length);
 
-    const categoryUsage: Record<string, number> = {};
+    // Pick categories using weighted sampling
+    const selectedCategories = pickCategories(eligibleCategories, numCategories);
+
+    // Pull random words from each selected category
     const result: Word[] = [];
-
-    // Build weighted category pool
-    const buildPool = () =>
-        Object.keys(byCategory)
-            .filter((cat) => {
-                const used = categoryUsage[cat] ?? 0;
-                const pointer = categoryPointers[cat] ?? 0;
-                return used < MAX_PER_CATEGORY && pointer < byCategory[cat].length;
-            })
-            .map((cat) => ({
-                item: cat,
-                weight: CATEGORY_WEIGHTS[cat] ?? 5,
-            }));
-
-    while (result.length < count) {
-        const pool = buildPool();
-        if (pool.length === 0) break;
-
-        // How many slots remain?
-        const needed = count - result.length;
-
-        // Sample a batch of categories (with replacement allowed via loop)
-        const selectedCategories = weightedSample(pool, Math.min(needed, pool.length));
-
-        let addedThisRound = 0;
-        for (const cat of selectedCategories) {
-            if (result.length >= count) break;
-            if ((categoryUsage[cat] ?? 0) >= MAX_PER_CATEGORY) continue;
-            if ((categoryPointers[cat] ?? 0) >= byCategory[cat].length) continue;
-
-            const ptr = categoryPointers[cat] ?? 0;
-            result.push(byCategory[cat][ptr]);
-            categoryPointers[cat] = ptr + 1;
-            categoryUsage[cat] = (categoryUsage[cat] ?? 0) + 1;
-            addedThisRound++;
-        }
-
-        // Safety: if nothing was added (all caps hit), break
-        if (addedThisRound === 0) break;
+    for (const cat of selectedCategories) {
+        const picked = shuffle(byCategory[cat]).slice(0, wordsPerCat);
+        result.push(...picked);
     }
 
-    // Final shuffle — mix categories across the board
-    return result.sort(() => Math.random() - 0.5);
+    // Handle remainder if count isn't perfectly divisible (edge case)
+    // Pull from a random remaining category
+    if (result.length < count) {
+        const usedCats = new Set(selectedCategories);
+        const remaining = valid.filter(
+            (w) => !usedCats.has(w.category) && !result.includes(w)
+        );
+        const extras = shuffle(remaining).slice(0, count - result.length);
+        result.push(...extras);
+    }
+
+    // Final shuffle — mix categories across the board positions
+    return shuffle(result);
 }
