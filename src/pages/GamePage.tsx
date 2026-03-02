@@ -23,6 +23,12 @@ import patternBg from "@/assets/pattern-bg.png";
 import { listenToGame, updateGameSession } from "@/lib/gameService";
 import { formatArabicWordCount, getGuessInstruction } from "@/lib/utils";
 import { useGameHistory } from "@/hooks/useGameHistory";
+import {
+  Sheet,
+  SheetContent,
+  SheetTrigger,
+} from "@/components/ui/sheet";
+import { History } from "lucide-react";
 
 const GamePage = () => {
   const { roomCode } = useParams<{ roomCode: string }>();
@@ -351,6 +357,7 @@ const GamePage = () => {
           <>
             <GameHeader game={game} onEndTurn={handleEndTurn} />
 
+            {/* ── Main play area ── */}
             <div className="flex-1 flex overflow-hidden">
               {/* Desktop left sidebar — teams */}
               <div className="hidden md:flex flex-col w-48 p-3 gap-3 shrink-0">
@@ -359,35 +366,32 @@ const GamePage = () => {
               </div>
 
               {/* Main content */}
-              <div className="flex-1 flex flex-col min-w-0">
-                {/* Status banner */}
-                {!isCurrentTeamSpymaster && currentPlayer && !isMyTeamTurn && (
-                  <div className="px-3 pt-3">
-                    <div className="bg-secondary/50 border border-border/40 rounded-xl py-2.5 px-4 text-center">
+              <div className="flex-1 flex flex-col min-w-0 min-h-0">
+                {/* Status / hint banners */}
+                <div className="px-2 sm:px-3 pt-2 sm:pt-3 space-y-2">
+                  {/* Waiting for other team */}
+                  {!isCurrentTeamSpymaster && currentPlayer && !isMyTeamTurn && (
+                    <div className="bg-secondary/50 border border-border/40 rounded-xl py-2 px-4 text-center">
                       <span className="text-muted-foreground text-sm font-medium">
                         ⏳ بانتظار دور الفريق الآخر
                       </span>
                     </div>
-                  </div>
-                )}
+                  )}
 
-                {/* Hint input (spymaster) */}
-                {game.turnPhase === "hint" && isCurrentTeamSpymaster && (
-                  <div className="p-3">
+                  {/* Hint input (spymaster) */}
+                  {game.turnPhase === "hint" && isCurrentTeamSpymaster && (
                     <HintInput
                       currentTeam={game.currentTeam}
                       onSubmitHint={handleSubmitHint}
                     />
-                  </div>
-                )}
+                  )}
 
-                {/* Waiting for hint (non-spymaster, own team's turn) */}
-                {game.turnPhase === "hint" &&
-                  !isCurrentTeamSpymaster &&
-                  isMyTeamTurn && (
-                    <div className="px-3 pt-3">
+                  {/* Waiting for hint (non-spymaster, own team) */}
+                  {game.turnPhase === "hint" &&
+                    !isCurrentTeamSpymaster &&
+                    isMyTeamTurn && (
                       <div
-                        className={`border rounded-xl py-2.5 px-4 text-center animate-pulse ${
+                        className={`border rounded-xl py-2 px-4 text-center animate-pulse ${
                           game.currentTeam === "red"
                             ? "bg-team-red/5 border-team-red/20"
                             : "bg-team-blue/5 border-team-blue/20"
@@ -397,49 +401,41 @@ const GamePage = () => {
                           بانتظار التلميح من رئيس الفريق...
                         </span>
                       </div>
-                    </div>
-                  )}
+                    )}
 
-                {/* Current hint display during guessing */}
-                {game.turnPhase === "guessing" && game.currentHint && (
-                  <div className="px-3 pt-3">
+                  {/* Current hint during guessing */}
+                  {game.turnPhase === "guessing" && game.currentHint && (
                     <div
-                      className={`border rounded-xl py-2.5 px-5 text-center ${
+                      className={`border rounded-xl py-2 px-4 text-center ${
                         game.currentTeam === "red"
                           ? "bg-team-red/5 border-team-red/20"
                           : "bg-team-blue/5 border-team-blue/20"
                       }`}
                     >
-                      <div className="flex flex-col items-center gap-1">
-                        <div className="flex items-center gap-2">
-                          <span className="text-xs text-muted-foreground">
-                            التلميح:
-                          </span>
-                          <span className="font-bold text-base text-foreground">
-                            {game.currentHint.word}
-                          </span>
-                          <span className="text-xs text-muted-foreground">
-                            ({formatArabicWordCount(game.currentHint.count)})
-                          </span>
-                        </div>
-                        <div className="flex items-center gap-2 text-xs">
-                          <span className="text-muted-foreground">
-                            {getGuessInstruction(
-                              game.currentHint.count,
-                              game.players.filter(
-                                (p) =>
-                                  p.team === game.currentTeam && !p.isSpymaster,
-                              ).length,
-                            )}
-                          </span>
-                          <span className="text-gold font-semibold">
-                            · {game.guessesRemaining} متبقي
-                          </span>
-                        </div>
+                      <div className="flex flex-wrap items-center justify-center gap-x-2 gap-y-0.5">
+                        <span className="text-xs text-muted-foreground">التلميح:</span>
+                        <span className="font-bold text-base text-foreground">
+                          {game.currentHint.word}
+                        </span>
+                        <span className="text-xs text-muted-foreground">
+                          ({formatArabicWordCount(game.currentHint.count)})
+                        </span>
+                        <span className="text-xs text-muted-foreground">
+                          {getGuessInstruction(
+                            game.currentHint.count,
+                            game.players.filter(
+                              (p) =>
+                                p.team === game.currentTeam && !p.isSpymaster,
+                            ).length,
+                          )}
+                        </span>
+                        <span className="text-gold font-semibold text-xs">
+                          · {game.guessesRemaining} متبقي
+                        </span>
                       </div>
                     </div>
-                  </div>
-                )}
+                  )}
+                </div>
 
                 <GameBoard
                   cards={game.cards}
@@ -450,21 +446,36 @@ const GamePage = () => {
                   currentTeam={game.currentTeam}
                   canGuess={canGuess}
                 />
+
+                {/* ── Mobile bottom bar ── */}
+                <div className="md:hidden flex items-center justify-between gap-2 px-2 pb-2 pt-1 border-t border-border/30 bg-card/60 backdrop-blur-sm shrink-0">
+                  {/* Compact team scores */}
+                  <div className="flex items-center gap-2">
+                    <TeamSidebar game={game} team="red" compact />
+                    <TeamSidebar game={game} team="blue" compact />
+                  </div>
+
+                  {/* History sheet trigger */}
+                  <Sheet>
+                    <SheetTrigger asChild>
+                      <button
+                        className="flex items-center gap-1.5 text-xs font-semibold px-3 py-2 rounded-xl border border-border/60 bg-background/60 hover:bg-secondary/80 transition-all duration-150 active:scale-95 shrink-0"
+                        aria-label="عرض سجل اللعبة"
+                      >
+                        <History className="w-3.5 h-3.5" />
+                        السجل
+                      </button>
+                    </SheetTrigger>
+                    <SheetContent side="bottom" className="h-[70dvh] p-0 rounded-t-2xl">
+                      <HistorySidebar history={history} />
+                    </SheetContent>
+                  </Sheet>
+                </div>
               </div>
 
               {/* Desktop right sidebar — history */}
-              <div className="hidden md:flex flex-col w-44 p-3 shrink-0">
+              <div className="hidden md:flex flex-col w-44 lg:w-64 p-3 shrink-0">
                 <HistorySidebar history={history} />
-              </div>
-            </div>
-
-            {/* Mobile team scores */}
-            <div className="md:hidden flex gap-2 px-3 pb-3">
-              <div className="flex-1">
-                <TeamSidebar game={game} team="red" />
-              </div>
-              <div className="flex-1">
-                <TeamSidebar game={game} team="blue" />
               </div>
             </div>
           </>

@@ -4,9 +4,11 @@ import { Crown } from "lucide-react";
 interface TeamSidebarProps {
   game: GameState;
   team: Team;
+  /** Renders a compact score chip suitable for the mobile bottom bar */
+  compact?: boolean;
 }
 
-const TeamSidebar = ({ game, team }: TeamSidebarProps) => {
+const TeamSidebar = ({ game, team, compact = false }: TeamSidebarProps) => {
   const players = game.players.filter((p) => p.team === team);
   const isActive = game.currentTeam === team;
   const score = game.scores[team];
@@ -31,6 +33,29 @@ const TeamSidebar = ({ game, team }: TeamSidebarProps) => {
         bar: "bg-team-blue",
         label: "الأزرق",
       };
+
+  /* ── Compact chip for mobile bottom bar ── */
+  if (compact) {
+    return (
+      <div
+        className={`
+          flex items-center gap-2 px-3 py-2 rounded-xl border
+          ${colors.bg} ${colors.border}
+          ${isActive ? "ring-2 ring-gold shadow-[0_0_10px_hsl(var(--gold)/0.2)]" : ""}
+          transition-all duration-300
+        `}
+      >
+        {isActive && (
+          <span className={`w-1.5 h-1.5 rounded-full ${colors.badge} shrink-0`} />
+        )}
+        <span className={`text-xs font-bold ${colors.text}`}>{colors.label}</span>
+        <span className={`${colors.badge} text-white text-xs font-black px-2 py-0.5 rounded-lg`}>
+          {score}
+          <span className="opacity-60 font-normal">/{target}</span>
+        </span>
+      </div>
+    );
+  }
 
   return (
     <div

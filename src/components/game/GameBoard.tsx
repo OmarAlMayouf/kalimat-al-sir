@@ -131,7 +131,7 @@ const GameBoard = ({
     !currentPlayer?.isSpymaster;
 
   return (
-    <div className="flex-1 px-2 py-3 sm:px-3 sm:py-4">
+    <div className="flex-1 px-2 py-2 sm:px-3 sm:py-3 flex items-center justify-center">
       <style>{`
         @keyframes card-flip {
           0%   { transform: rotateY(0deg) scale(1); }
@@ -146,8 +146,7 @@ const GameBoard = ({
         }
       `}</style>
       <div
-        className="w-full max-w-3xl mx-auto grid grid-cols-5 gap-1.5 sm:gap-2"
-        style={{ gridAutoRows: "1fr", aspectRatio: "5 / 5" }}
+        className="w-full max-w-3xl grid grid-cols-5 gap-1 sm:gap-1.5 md:gap-2"
       >
         {cards.map((card, index) => (
           <button
@@ -159,34 +158,35 @@ const GameBoard = ({
             onContextMenu={(e) => handleContextMenu(e, index)}
             disabled={!isMyTurn || card.revealed}
             className={`
-              relative rounded-xl border-2 p-1.5 sm:p-2.5
-              min-h-0 min-w-0 aspect-square
+              relative rounded-lg sm:rounded-xl border-2
+              aspect-square
               flex items-center justify-center text-center
-              font-semibold text-[10px] sm:text-xl
+              font-semibold
               animate-scale-in select-none
               ${revealingIndices.has(index) ? "card-flipping" : "transition-all duration-300"}
               ${!isMyTurn || card.revealed ? "cursor-default" : "cursor-pointer"}
               ${getCardStyle(card)}
             `}
             style={{
+              fontSize: "clamp(0.55rem, 1.8vw, 0.9rem)",
               animationDelay: revealingIndices.has(index)
                 ? "0ms"
                 : `${index * 18}ms`,
             }}
           >
-            <span className="leading-tight break-words w-full px-0.5">
+            <span className="leading-tight break-words w-full px-0.5 py-0.5 sm:px-1">
               {card?.word?.word ?? ""}
             </span>
             {card?.revealed && card.type === "assassin" && (
-              <span className="absolute top-1 right-1 text-[10px]">💀</span>
+              <span className="absolute top-0.5 right-0.5 text-[8px] sm:text-[10px]">💀</span>
             )}
             {card?.revealed && isSpymaster && (
               <span className="absolute inset-0 flex items-center justify-center rounded-xl pointer-events-none">
-                <span className="text-lg opacity-40">✕</span>
+                <span className="text-base opacity-40">✕</span>
               </span>
             )}
             {!card?.revealed && isSpymaster && card.highlighted && (
-              <span className="absolute top-1 right-1 flex items-center justify-center w-4 h-4 rounded-full bg-gold text-[9px] font-black text-black shadow-md">
+              <span className="absolute top-0.5 right-0.5 flex items-center justify-center w-3.5 h-3.5 sm:w-4 sm:h-4 rounded-full bg-gold text-[7px] sm:text-[9px] font-black text-black shadow-md">
                 ✓
               </span>
             )}

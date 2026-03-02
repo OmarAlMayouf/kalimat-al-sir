@@ -1,6 +1,5 @@
 import { useEffect, useRef } from "react";
 import { HistoryEntry } from "@/lib/gameState";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { History } from "lucide-react";
 
 interface HistorySidebarProps {
@@ -36,7 +35,7 @@ function HintRow({
   const isRed = entry.team === "red";
   return (
     <div
-      className={`rounded-xl border px-3 py-2 text-xs ${
+      className={`rounded-xl border px-3 py-2 text-xs overflow-hidden ${
         isRed
           ? "bg-team-red/10 border-team-red/20"
           : "bg-team-blue/10 border-team-blue/20"
@@ -49,9 +48,9 @@ function HintRow({
       >
         {isRed ? "● الأحمر" : "● الأزرق"}
       </span>
-      <div className="mt-0.5 flex items-baseline gap-1.5">
-        <span className="font-bold text-foreground text-sm">{entry.word}</span>
-        <span className="text-muted-foreground">({entry.amount})</span>
+      <div className="mt-0.5 flex items-baseline gap-1.5 min-w-0 overflow-hidden">
+        <span className="font-bold text-foreground text-sm min-w-0 truncate block">{entry.word}</span>
+        <span className="text-muted-foreground shrink-0">({entry.amount})</span>
       </div>
     </div>
   );
@@ -66,13 +65,13 @@ function GuessRow({
     <div
       className={`rounded-xl border px-3 py-2 text-xs ${COLOR_BG[entry.color]}`}
     >
-      <span className="text-muted-foreground">{entry.player} خمّن:</span>
-      <div className="flex items-center justify-between mt-0.5">
-        <span className={`text-sm ${COLOR_CLASSES[entry.color]}`}>
+      <span className="text-muted-foreground truncate block">{entry.player} خمّن:</span>
+      <div className="flex items-center justify-between gap-1 mt-0.5 min-w-0">
+        <span className={`text-sm min-w-0 truncate ${COLOR_CLASSES[entry.color]}`}>
           {entry.word}
         </span>
         <span
-          className={`text-[10px] px-1.5 py-0.5 rounded-md border ${COLOR_BG[entry.color]} ${COLOR_CLASSES[entry.color]}`}
+          className={`text-[10px] px-1.5 py-0.5 rounded-md border shrink-0 ${COLOR_BG[entry.color]} ${COLOR_CLASSES[entry.color]}`}
         >
           {COLOR_LABEL[entry.color]}
         </span>
@@ -112,23 +111,47 @@ const HistorySidebar = ({ history }: HistorySidebarProps) => {
   }, [history.length]);
 
   return (
-    <div className="flex flex-col h-full bg-card/60 border border-border/50 rounded-2xl overflow-hidden">
+    <div
+      className="
+        flex flex-col
+        h-full max-h-[calc(100dvh-6rem)]
+        bg-card border border-border/50
+        rounded-2xl overflow-hidden
+        shadow-sm
+      "
+    >
       {/* Header */}
-      <div className="flex items-center gap-2 px-3 py-2.5 border-b border-border/40 shrink-0">
+      <div className="flex items-center gap-2 px-3 py-2.5 border-b border-border/40 bg-muted/30 shrink-0">
         <History className="w-3.5 h-3.5 text-muted-foreground" />
-        <span className="text-xs font-semibold text-muted-foreground">
+        <span className="text-xs font-semibold text-muted-foreground tracking-wide">
           السجل
         </span>
+        {history.length > 0 && (
+          <span className="mr-auto text-[10px] font-medium text-muted-foreground/60 tabular-nums">
+            {history.length}
+          </span>
+        )}
       </div>
 
       {/* Entries */}
-      <ScrollArea className="flex-1 px-2 py-2">
+      <div
+        className="
+          flex-1 min-h-0
+          overflow-y-auto overflow-x-hidden
+          px-3 py-2
+          scrollbar-thin
+        "
+        style={{
+          scrollbarWidth: "thin",
+          scrollbarColor: "hsl(var(--muted-foreground) / 0.25) transparent",
+        }}
+      >
         {history.length === 0 ? (
-          <p className="text-[11px] text-muted-foreground/50 text-center mt-4">
+          <p className="text-[11px] text-muted-foreground/50 text-center py-6">
             لا يوجد تاريخ بعد
           </p>
         ) : (
-          <div className="space-y-1.5">
+          <div className="space-y-1.5 pb-2 overflow-hidden">
             {history.map((entry, i) =>
               entry.type === "hint" ? (
                 <HintRow key={i} entry={entry} />
@@ -141,7 +164,7 @@ const HistorySidebar = ({ history }: HistorySidebarProps) => {
             <div ref={bottomRef} />
           </div>
         )}
-      </ScrollArea>
+      </div>
     </div>
   );
 };

@@ -16,22 +16,23 @@ const GameHeader = ({ game, onEndTurn }: GameHeaderProps) => {
   const isRed = game.currentTeam === "red";
 
   return (
-    <div className="bg-card/80 backdrop-blur-sm border-b border-border/50 px-4 py-2.5 sticky top-0 z-20">
-      <div className="max-w-4xl mx-auto flex items-center justify-between gap-3">
-        {/* Team badge + hint */}
-        <div className="flex items-center gap-2.5 flex-1 min-w-0">
-          <span
-            className={`shrink-0 text-xs font-bold px-3 py-1.5 rounded-full transition-colors ${
-              isRed
-                ? "bg-team-red text-team-red-foreground"
-                : "bg-team-blue text-team-blue-foreground"
-            }`}
-          >
-            {isRed ? "الأحمر" : "الأزرق"}
-          </span>
+    <div className="bg-card/80 backdrop-blur-sm border-b border-border/50 px-3 py-2 sticky top-0 z-20">
+      <div className="max-w-4xl mx-auto flex flex-wrap items-center gap-x-3 gap-y-1.5">
+        {/* Team badge */}
+        <span
+          className={`shrink-0 text-xs font-bold px-3 py-1.5 rounded-full transition-colors ${
+            isRed
+              ? "bg-team-red text-team-red-foreground"
+              : "bg-team-blue text-team-blue-foreground"
+          }`}
+        >
+          {isRed ? "الأحمر" : "الأزرق"}
+        </span>
 
+        {/* Hint badge */}
+        <div className="flex-1 min-w-0 flex items-center gap-2 overflow-hidden">
           {game.currentHint ? (
-            <div className="flex items-center gap-2 bg-secondary/80 rounded-xl px-3 py-1.5 min-w-0 overflow-hidden">
+            <div className="flex items-center gap-1.5 bg-secondary/80 rounded-xl px-2.5 py-1.5 min-w-0 overflow-hidden max-w-full">
               <span className="font-bold text-sm text-foreground truncate">
                 {game.currentHint.word}
               </span>
@@ -45,36 +46,37 @@ const GameHeader = ({ game, onEndTurn }: GameHeaderProps) => {
               )}
             </div>
           ) : (
-            <span className="text-xs text-muted-foreground">
-              {game.turnPhase === "hint" ? "في انتظار التلميح..." : ""}
+            <span className="text-xs text-muted-foreground truncate">
+              {isHint ? "في انتظار التلميح..." : ""}
             </span>
           )}
         </div>
 
-        {/* Timer */}
-        {showTimer && (
-          <div
-            className={`flex items-center gap-1.5 shrink-0 font-mono font-bold text-lg tabular-nums transition-colors ${
-              isLowTime ? "text-destructive animate-pulse" : "text-foreground"
-            }`}
-          >
-            <Timer
-              className={`w-4 h-4 ${isLowTime ? "text-destructive" : "text-muted-foreground"}`}
-            />
-            {minutes}:{seconds.toString().padStart(2, "0")}
-          </div>
-        )}
+        {/* Timer + End turn row — always right-aligned */}
+        <div className="flex items-center gap-2 shrink-0 mr-auto">
+          {showTimer && (
+            <div
+              className={`flex items-center gap-1 font-mono font-bold text-base tabular-nums transition-colors ${
+                isLowTime ? "text-destructive animate-pulse" : "text-foreground"
+              }`}
+            >
+              <Timer
+                className={`w-3.5 h-3.5 ${isLowTime ? "text-destructive" : "text-muted-foreground"}`}
+              />
+              {minutes}:{seconds.toString().padStart(2, "0")}
+            </div>
+          )}
 
-        {/* End turn button */}
-        {isGuessing && (
-          <button
-            onClick={onEndTurn}
-            className="shrink-0 flex items-center gap-1.5 text-xs font-semibold px-3 py-2 rounded-xl border border-border/60 bg-background/60 hover:bg-secondary/80 hover:border-border transition-all duration-150 active:scale-95"
-          >
-            إنهاء الدور
-            <ChevronLeft className="w-3.5 h-3.5" />
-          </button>
-        )}
+          {isGuessing && (
+            <button
+              onClick={onEndTurn}
+              className="flex items-center gap-1 text-xs font-semibold px-2.5 py-1.5 rounded-xl border border-border/60 bg-background/60 hover:bg-secondary/80 hover:border-border transition-all duration-150 active:scale-95 whitespace-nowrap"
+            >
+              إنهاء الدور
+              <ChevronLeft className="w-3 h-3" />
+            </button>
+          )}
+        </div>
       </div>
     </div>
   );
